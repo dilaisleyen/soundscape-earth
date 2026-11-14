@@ -54,6 +54,9 @@
   #grid, #labels { pointer-events:none; }
   #marker { position:absolute; width:28px; height:28px; border:3px solid #fff; border-radius:50%;
             box-shadow:0 0 0 2px #000, 0 0 14px rgba(255,255,255,.6); transform:translate(-50%,-50%); pointer-events:none; }
+  #lockmark { position:absolute; width:26px; height:26px; border:3px solid var(--gold); border-radius:50%;
+              background:radial-gradient(circle, var(--gold) 0 3px, transparent 4px);
+              box-shadow:0 0 0 2px #000, 0 0 14px rgba(255,213,74,.7); transform:translate(-50%,-50%); pointer-events:none; }
   #zoombar { position:absolute; right:12px; top:12px; display:flex; flex-direction:column; gap:6px; }
   #zoombar button { width:44px; height:44px; font-size:22px; line-height:1; color:#fff; cursor:pointer;
                     background:rgba(8,12,18,.72); border:1px solid rgba(255,255,255,.35); border-radius:10px; }
@@ -208,6 +211,7 @@
       <canvas id="grid" aria-hidden="true"></canvas>
       <canvas id="labels" aria-hidden="true"></canvas>
       <div id="marker" hidden></div>
+      <div id="lockmark" hidden></div>
       <div id="tip" aria-hidden="true" hidden></div>
       <div id="zoombar">
         <button id="zin" type="button" aria-label="Zoom in" title="Zoom in (+)">+</button>
@@ -320,6 +324,11 @@ let detail = null;               // the live picture in use: { date, frame, lon0
 let liveDate = null;             // the newest day GIBS has
 let liveDateState = 'pending';   // 'pending', 'ready' or 'failed'
 let detailTimer = 0, detailAbort = null, detailFailedKey = '', detailFailedAt = 0;  // the wait, the request in flight, the last failure
+// The spot the mouse has clicked, whose sound is locked (null = nothing locked). Kept in map pixels, so it stays on
+// the same place when the map is zoomed or moved. (The code is in the "Lock the sound" section below.)
+let lock = null;
+let lockTimer = 0, lockRepeatAt = 0;
+const lockMark = document.getElementById('lockmark');
 // The picture lives at its real size in a hidden canvas. Every value is read from here, never from the
 // zoomed picture on screen, so zooming can never change what a pixel means.
 const data = document.createElement('canvas');
@@ -811,7 +820,8 @@ function render() {
   drawLabels(b);
   placeMarker();
   placeTip();
-  zoomLabel.textContent = vw.zoom === 1 ? 'Whole map' : `${+vw.zoom.toFixed(1)}× zoom`;
+  zoomLabel.textContent = (vw.zoom === 1 ? 'Whole map' : `${+vw.zoom.toFixed(1)}× zoom`) +
+    (lock ? ' · sound locked: right-click to release' : '');
   scheduleDetail();  // when the view has been still for a moment, finer detail is asked for
 }
 
@@ -864,6 +874,12 @@ function placeMarker() {  // the white ring that shows where the keyboard is
   marker.hidden = !(markerOn && p.x >= 0 && p.y >= 0 && p.x <= r.width && p.y <= r.height);
   marker.style.left = p.x + 'px';
   marker.style.top = p.y + 'px';
+  if (lock) {  // the gold ring that shows where the sound is locked
+    const q = mapToCss(lock.x, lock.y);
+    lockMark.hidden = !(q.x >= 0 && q.y >= 0 && q.x <= r.width && q.y <= r.height);
+    lockMark.style.left = q.x + 'px';
+    lockMark.style.top = q.y + 'px';
+  } else lockMark.hidden = true;
 }
 
 // The value label: beside the ring for the keyboard, beside the pointer for a mouse (below and to the right, so the
@@ -871,7 +887,8 @@ function placeMarker() {  // the white ring that shows where the keyboard is
 function placeTip() {
   const r = canvas.getBoundingClientRect();
   let ax, ay, gap, above = false;
-  if (markerOn) { const p = mapToCss(cursor.x + 0.5, cursor.y + 0.5); ax = p.x; ay = p.y; gap = 24; }
+  if (lock) { const p = mapToCss(lock.x, lock.y); ax = p.x; ay = p.y; gap = 22; }  // next to the gold ring
+  else if (markerOn) { const p = mapToCss(cursor.x + 0.5, cursor.y + 0.5); ax = p.x; ay = p.y; gap = 24; }
   else if (tipOn && tipAnchor) { ax = tipAnchor.x; ay = tipAnchor.y; above = tipAnchor.touch; gap = above ? 40 : 14; }
   else { tip.hidden = true; return; }
   if (ax < 0 || ay < 0 || ax > r.width || ay > r.height) { tip.hidden = true; return; }
@@ -942,6 +959,7 @@ function probe(x, y, announceIt, quiet) {  // quiet: update the readout only, wi
 // ---- Pointer: hover to hear, drag to move the map, wheel or pinch to zoom ----
 const pointers = new Map();  // fingers / mouse buttons that are down right now
 function hearAt(clientX, clientY, touch) {
+  if (lock) return;  // the sound is locked on a clicked spot: moving over the map changes nothing
   const r = canvas.getBoundingClientRect();
   tipAnchor = { x: clientX - r.left, y: clientY - r.top, touch: !!touch };
   tipOn = true;
@@ -963,12 +981,55 @@ function zoomAt(z, clientX, clientY) {  // the point under the pointer stays whe
   render();
 }
 
+// ---- Lock the sound on a spot: click to lock, right-click to release ----
+// A click with the left button (not a drag) locks the sound on the spot that was clicked: only that spot sounds,
+// wherever the mouse goes, and the gold ring marks it. A right click releases it, and the sound goes back to
+// following the pointer. (Dragging still moves the map; a finger or the keyboard also takes over from a lock.)
+const LOCK_REPEAT = { land: 800, ice: 2600 };  // ms: a locked land spot knocks again and again, a locked ice spot rings again and again
+function lockAt(clientX, clientY) {
+  const m = screenToMap(clientX, clientY);
+  lock = { x: Math.max(0, Math.min(MAP_W - 0.001, m.x)), y: Math.max(0, Math.min(MAP_H - 0.001, m.y)) };
+  tipOn = false;
+  markerOn = false;
+  probe(lock.x, lock.y, false);  // reads the spot and plays it
+  lockRepeatAt = performance.now();
+  clearInterval(lockTimer);
+  lockTimer = setInterval(repeatLocked, 200);
+  render();
+  announce(`Sound locked here. ${describe(lastProbe.result, lastProbe.place)}. Right-click to release.`);
+}
+function repeatLocked() {  // ocean sound is continuous; land and ice are single sounds, so they are played again
+  if (!lock || !lastProbe || lastProbe.result.type === 'ocean') return;
+  if (performance.now() - lockRepeatAt < LOCK_REPEAT[lastProbe.result.type]) return;
+  lockRepeatAt = performance.now();
+  updateSound(lastProbe.result, lastProbe.lon);
+}
+function releaseLock(announceIt, clientX, clientY) {  // clientX, clientY: where the pointer is, so the sound can follow it at once
+  if (!lock) return false;
+  lock = null;
+  clearInterval(lockTimer);
+  lockTimer = 0;
+  render();
+  if (clientX !== undefined) hearAt(clientX, clientY);
+  else updateSound(null);
+  if (announceIt) announce('Sound released.');
+  return true;
+}
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());  // the right button belongs to the map
+
 canvas.addEventListener('pointerdown', (e) => {
+  if (e.pointerType === 'mouse' && e.button !== 0) {  // the right (or middle) button never moves the map; the right one releases the lock
+    if (e.button === 2) releaseLock(true, e.clientX, e.clientY);
+    return;
+  }
   canvas.setPointerCapture(e.pointerId);
-  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, startX: e.clientX, startY: e.clientY, moved: false });
   markerOn = false;
   if (e.pointerType === 'mouse') canvas.style.cursor = 'grabbing';
-  else if (pointers.size === 1) hearAt(e.clientX, e.clientY, true);  // one finger: hear what is under it
+  else {
+    releaseLock(false);                                              // a finger takes over from the mouse
+    if (pointers.size === 1) hearAt(e.clientX, e.clientY, true);     // one finger: hear what is under it
+  }
 });
 canvas.addEventListener('pointermove', (e) => {
   if (e.pointerType === 'mouse' && e.buttons === 0) { markerOn = false; hearAt(e.clientX, e.clientY); return; }  // plain hover
@@ -986,17 +1047,22 @@ canvas.addEventListener('pointermove', (e) => {
     if (d0 > 0) zoomAt(vw.zoom * d1 / d0, mid1.x, mid1.y);
     panBy(mid1.x - mid0.x, mid1.y - mid0.y);
   }
-  pointers.set(e.pointerId, now);
+  pointers.set(e.pointerId, { ...prev, x: now.x, y: now.y, moved: prev.moved || Math.hypot(now.x - prev.startX, now.y - prev.startY) > 5 });
 });
 function endPointer(e) {
   pointers.delete(e.pointerId);
   canvas.style.cursor = '';
   if (e.pointerType !== 'mouse') { tipOn = false; placeTip(); updateSound(null); }  // finger lifted: label and sound go
 }
-canvas.addEventListener('pointerup', endPointer);
+canvas.addEventListener('pointerup', (e) => {
+  const p = pointers.get(e.pointerId);
+  const wasClick = e.pointerType === 'mouse' && e.button === 0 && p && !p.moved && pointers.size === 1;
+  endPointer(e);
+  if (wasClick) lockAt(e.clientX, e.clientY);  // a click, not a drag: lock the sound here
+});
 canvas.addEventListener('pointercancel', endPointer);
 canvas.addEventListener('pointerleave', (e) => {
-  if (e.pointerType === 'mouse' && pointers.size === 0) { tipOn = false; placeTip(); updateSound(null); }
+  if (e.pointerType === 'mouse' && pointers.size === 0 && !lock) { tipOn = false; placeTip(); updateSound(null); }
 });
 canvas.addEventListener('wheel', (e) => {
   e.preventDefault();
@@ -1067,6 +1133,7 @@ function onMapKey(e) {  // also used by the global key handler in voice mode
   const dir = ARROWS[e.key];
   if (!dir) return;  // any other key (Tab, etc.) keeps its normal job
   e.preventDefault();
+  releaseLock(false);  // the keyboard takes over from a locked spot
   const n = (e.shiftKey ? 4 : 1) * stepPx();
   let x = Math.floor(cursor.x) + dir[0] * n, y = Math.floor(cursor.y) + dir[1] * n;  // the keyboard moves on whole saved pixels
   x = vw.zoom === 1 ? (x + MAP_W) % MAP_W : Math.max(0, Math.min(MAP_W - 1, x));  // whole map: the world wraps east-west; zoomed: stops at the edge
@@ -1077,7 +1144,7 @@ function onMapKey(e) {  // also used by the global key handler in voice mode
   probe(x, y, true);
 }
 canvas.addEventListener('keydown', onMapKey);
-canvas.addEventListener('blur', () => { updateSound(null); markerOn = false; placeMarker(); placeTip(); });
+canvas.addEventListener('blur', () => { if (!lock) updateSound(null); markerOn = false; placeMarker(); placeTip(); });
 
 if ('ResizeObserver' in window) new ResizeObserver(resize).observe(canvas);  // the map frame changed size
 window.addEventListener('resize', resize);                                    // fallback for the window itself
@@ -1126,7 +1193,7 @@ const GUIDE = "Earth Jukebox turns NASA's sea surface temperature map into sound
   'Press W to hear where you are, R to repeat, H for help, and Space to stop or start the sound.';
 const HELP = 'Arrow keys move over the map. Hold Shift to move faster. W says where you are. ' +
   'Plus and minus zoom in and out, and zero shows the whole map. G turns the grid on or off. ' +
-  'L turns the country names on or off. U turns the interface sounds on or off. E says why the current place sounds the way it does, and D gives the details. ' +
+  'Click the map with the mouse to lock the sound on that spot, and right-click to release it. L turns the country names on or off. U turns the interface sounds on or off. E says why the current place sounds the way it does, and D gives the details. ' +
   'R repeats the last message. Space starts or stops the sound. ' +
   'Control, Alt and B reopen the accessibility options.';
 
@@ -1255,7 +1322,7 @@ function decodeDetail(picture, want) {
 function refreshAfterDetail() {
   render();
   timeDate.textContent = frameLabel(frameShown);
-  if (lastProbe) probe(cursor.x, cursor.y, false, !(tipOn || markerOn));  // read the same spot again, now in finer detail
+  if (lastProbe) probe(cursor.x, cursor.y, false, !(tipOn || markerOn || lock));  // read the same spot again, now in finer detail
 }
 
 // The value under a point from the live picture, or null (not covered, or no data there).
@@ -1295,7 +1362,7 @@ function toggleLive() {
     setLive('');
     timeDate.textContent = frameLabel(frameShown);
     render();
-    if (lastProbe) probe(cursor.x, cursor.y, false, !(tipOn || markerOn));
+    if (lastProbe) probe(cursor.x, cursor.y, false, !(tipOn || markerOn || lock));
   } else {
     detailFailedKey = '';
     scheduleDetail(true);
@@ -1393,7 +1460,7 @@ function showFrame(i, picture) {
   render();
   scheduleDetail(true);
   // read the same spot again, in the new picture. The sound follows only if the pointer or keyboard is on the map.
-  if (lastProbe) probe(cursor.x, cursor.y, false, !(tipOn || markerOn));
+  if (lastProbe) probe(cursor.x, cursor.y, false, !(tipOn || markerOn || lock));
   const text = lastProbe ? `${frameLabel(i)}. ${describe(lastProbe.result, lastProbe.place)}` : frameLabel(i);
   timeInput.setAttribute('aria-valuetext', text);  // a screen reader reads this value text
   if (mode === 'voice') speak(text);
@@ -1688,7 +1755,8 @@ function openLanding() {  // the Accessibility options button, or Ctrl + Alt + B
   if ('speechSynthesis' in window) speechSynthesis.cancel();
   if (aboutDlg.open) aboutDlg.close();
   if (screen === 'landing') { show('ask', true); HEADINGS.landing.focus({ preventScroll: true }); return; }
-  updateSound(null);  // the data sound fades away; the ambient bed and the Start / Stop state stay as they are
+  releaseLock(false);  // a locked spot is let go; the data sound fades away; the ambient bed and the Start / Stop state stay as they are
+  updateSound(null);
   showScreen('landing', () => show('ask', true));
 }
 

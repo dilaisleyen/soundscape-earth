@@ -36,9 +36,10 @@ The five themes are the team's names for the character of each kind of place. Th
 ## Controls
 
 | Action | Mouse / touch | Keyboard |
-|---|---|---|---|
+|---|---|---|
 | Hear a place | Hover (mouse) or slide one finger | Tab to the map, then arrow keys (Shift = bigger steps) |
 | Zoom | Wheel, pinch with two fingers, `+` / `-` buttons | `+`, `-`, `0` (whole map) |
+| Lock the sound on one spot | Left click (mouse) | Right click releases it; arrow keys or a finger also take over |
 | Move the zoomed map | Drag (mouse), two fingers (touch) | Arrow keys follow the ring |
 | Where am I? | | `W` |
 | Repeat the last message | | `R` |
