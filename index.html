@@ -62,6 +62,8 @@
   .r-where { grid-column:1 / -1; margin-top:4px; }
   #r-place { font-size:20px; font-weight:600; line-height:1.25; }
   #r-coords { color:var(--muted); font-size:15px; }
+  #r-theme { margin-top:2px; color:var(--gold); font-size:14px; }
+  #r-theme:empty { display:none; }
   #side-extra { flex:1 1 auto; min-height:0; overflow:auto; }  /* room for the "why does it sound like this" panel */
 
   /* Colour scale: the same colours NASA used, with a pin that follows the value under the pointer */
@@ -166,6 +168,7 @@
   <div class="tools">
     <button id="start" class="tool primary" type="button">Start sound</button>
     <button id="grid-btn" class="tool" type="button" aria-pressed="true" aria-keyshortcuts="G">Grid</button>
+    <button id="ui-btn" class="tool" type="button" aria-pressed="true" aria-keyshortcuts="U" title="Soft sounds for buttons, zoom and screen changes">UI sounds</button>
     <button id="access" class="tool" type="button" aria-keyshortcuts="Control+Alt+B">Accessibility options</button>
   </div>
 </header>
@@ -195,6 +198,7 @@
     <div class="r-where">
       <div id="r-place">Move over the map</div>
       <div id="r-coords">or press Tab to focus it and use the arrow keys</div>
+      <div id="r-theme"></div>
     </div>
   </section>
 
@@ -255,6 +259,7 @@ const rVal = document.getElementById('r-value');
 const rPlace = document.getElementById('r-place');
 const rCoords = document.getElementById('r-coords');
 const rChip = document.getElementById('r-chip');
+const rTheme = document.getElementById('r-theme');
 
 const img = new Image();
 img.onload = () => { ctx.drawImage(img, 0, 0, 1024, 512); render(); };
@@ -413,8 +418,33 @@ function startAudio() {
     }
   });
 
-  audio = { ac, pan, space, noiseBuf, bodyFilter, bodyGain, highFilter, highGain, lfo, lfoDepth, windGain, ambientBus, lastHit: 0 };
+  // Interface sounds (buttons, screen changes, zoom) have their own bus, so they can be switched off on their own.
+  const uiBus = ac.createGain();
+  uiBus.connect(master);
+  const uiWet = ac.createGain();
+  uiWet.gain.value = 0.5;
+  uiBus.connect(uiWet).connect(reverb);
+
+  audio = { ac, pan, space, noiseBuf, bodyFilter, bodyGain, highFilter, highGain, lfo, lfoDepth, windGain, ambientBus, uiBus, lastHit: 0 };
   scheduleSprout();
+}
+
+// Sound themes: the team's name for the character of each kind of place. The theme only names that
+// character: how strong the sound is still comes from the real value (see soundFor).
+//   calm          normal water       soft, steady, neutral chord
+//   heartwarming  warmer than normal brighter, livelier chord with a shimmering layer
+//   melancholy    colder than normal darker, weaker chord and a distant hollow wind
+//   solitude      ice / no data      one lonely glass note
+//   grounded      land               a dull, rough knock
+const THEMES = { calm: 'calm', warm: 'heartwarming', cold: 'melancholy', ice: 'solitude', land: 'grounded' };
+// Within this many degrees of 0 the theme is "calm". This only picks the label; the sound itself
+// does not have a dead zone and follows the value from 0 onwards.
+const CALM_BAND = 0.25;
+function themeFor(result) {
+  if (result.type === 'land') return THEMES.land;
+  if (result.type === 'ice') return THEMES.ice;
+  if (Math.abs(result.value) <= CALM_BAND) return THEMES.calm;
+  return result.value > 0 ? THEMES.warm : THEMES.cold;
 }
 
 // Meaning layer: what the continuous ocean sound is like for a given point.
@@ -531,6 +561,38 @@ function scheduleSprout() {
   setTimeout(() => { sprout(); scheduleSprout(); }, 7000 + Math.random() * 7000);
 }
 
+// ---- Interface sounds ----
+// The same language as the calm theme: soft sine notes from the same A / E family as the chords, with a soft
+// start and a quick fade. They are much quieter than the data sounds (which always stay in front), and they are
+// only heard while the sound is running. The "UI sounds" button (or U) switches them off on their own.
+const UI_KEY = 'earth-jukebox-ui-sounds';
+const UI_LEVEL = 0.03;  // peak volume of one note; the data sounds peak several times higher
+let uiSoundsOn = true;
+try { if (localStorage.getItem(UI_KEY) === 'off') uiSoundsOn = false; } catch (e) { /* no saved choice */ }
+
+function uiSound(kind) {
+  if (!uiSoundsOn || !audio || audio.ac.state !== 'running') return;
+  const { ac, uiBus } = audio, t = ac.currentTime;
+  const note = (freq, start, length, level, glideTo) => {
+    const osc = ac.createOscillator(), g = ac.createGain();
+    osc.frequency.setValueAtTime(freq, t + start);
+    if (glideTo) osc.frequency.exponentialRampToValueAtTime(glideTo, t + start + length);
+    g.gain.setValueAtTime(0.0001, t + start);
+    g.gain.exponentialRampToValueAtTime(level, t + start + 0.012);  // soft start: no click
+    g.gain.exponentialRampToValueAtTime(0.0005, t + start + length);
+    osc.connect(g).connect(uiBus);
+    osc.start(t + start);
+    osc.stop(t + start + length + 0.02);
+  };
+  const A4 = 440, E5 = 659.26;
+  if (kind === 'press') note(E5, 0, 0.09, UI_LEVEL);                          // a soft tick
+  else if (kind === 'zoomIn') note(A4, 0, 0.16, UI_LEVEL, E5);               // a small rise
+  else if (kind === 'zoomOut') note(E5, 0, 0.16, UI_LEVEL, A4);              // a small fall
+  else if (kind === 'zoomReset') { note(E5, 0, 0.1, UI_LEVEL); note(A4, 0.08, 0.14, UI_LEVEL); }
+  else if (kind === 'enter') { note(A4, 0, 0.45, UI_LEVEL * 1.2); note(E5, 0.12, 0.5, UI_LEVEL * 1.2); }  // the map screen opens: rising pair
+  else if (kind === 'leave') { note(E5, 0, 0.45, UI_LEVEL * 1.2); note(A4, 0.12, 0.5, UI_LEVEL * 1.2); }  // back to the landing screen: falling pair
+}
+
 // result = null fades everything out (pointer left the map)
 function updateSound(result, lon) {
   if (!audio) return;
@@ -607,13 +669,14 @@ function placeName(type, lat, lon) {
   return type === 'land' ? 'Land' : 'Open ocean';
 }
 
-// What a screen reader says, e.g. "North Atlantic, plus 2.3 degrees"
+// What a screen reader says, e.g. "North Atlantic, plus 2.3 degrees, heartwarming theme"
 function describe(result, place) {
-  if (result.type === 'land') return `${place}, land`;
-  if (result.type === 'ice') return `${place}, ice or no data`;
-  const v = Math.round(result.value * 10) / 10;
-  if (v === 0) return `${place}, 0.0 degrees`;
-  return `${place}, ${v > 0 ? 'plus' : 'minus'} ${Math.abs(v).toFixed(1)} degrees`;
+  const theme = `${themeFor(result)} theme`;
+  if (result.type === 'land') return `${place}, land, ${theme}`;
+  if (result.type === 'ice') return `${place}, ice or no data, ${theme}`;
+  const mag = Math.abs(result.value).toFixed(1);  // the same rounding the readout uses
+  if (mag === '0.0') return `${place}, 0.0 degrees, ${theme}`;
+  return `${place}, ${result.value > 0 ? 'plus' : 'minus'} ${mag} degrees, ${theme}`;
 }
 
 // ---- The view: zoom and pan ----
@@ -766,9 +829,13 @@ function probe(x, y, announceIt) {
   rPlace.textContent = place;
   rCoords.textContent = `${Math.abs(lat).toFixed(1)}°${lat >= 0 ? 'N' : 'S'}, ${Math.abs(lon).toFixed(1)}°${lon >= 0 ? 'E' : 'W'}`;
   rChip.style.background = `rgb(${r},${g},${b})`;
+  rTheme.textContent = `Theme: ${themeFor(result)}`;
   if (result.type === 'land') rVal.textContent = 'Land';
   else if (result.type === 'ice') rVal.textContent = 'Ice / no data';
-  else rVal.textContent = (result.value > 0 ? '+' : result.value < 0 ? '−' : '') + Math.abs(result.value).toFixed(1) + ' °C';
+  else {
+    const mag = Math.abs(result.value).toFixed(1);  // the same rounding the spoken text uses (see describe)
+    rVal.textContent = mag === '0.0' ? '0.0 °C' : (result.value > 0 ? '+' : '−') + mag + ' °C';
+  }
   setPin(result.type === 'ocean' ? result.value : null);
   tip.textContent = rVal.textContent;
   placeMarker();
@@ -858,11 +925,13 @@ function stepZoom(dir) {
   vw.zoom = next;
   if (markerOn && dir > 0) { vw.cx = cursor.x + 0.5; vw.cy = cursor.y + 0.5; }  // keyboard users: zoom towards the ring
   render();
+  uiSound(dir > 0 ? 'zoomIn' : 'zoomOut');
   announce(zoomText());
 }
 function resetView() {
   vw.zoom = 1; vw.cx = MAP_W / 2; vw.cy = MAP_H / 2;
   render();
+  uiSound('zoomReset');
   announce(zoomText());
 }
 function toggleGrid() {
@@ -875,6 +944,23 @@ document.getElementById('zin').addEventListener('click', () => stepZoom(1));
 document.getElementById('zout').addEventListener('click', () => stepZoom(-1));
 document.getElementById('zreset').addEventListener('click', resetView);
 gridBtn.addEventListener('click', toggleGrid);
+
+// The "UI sounds" button: interface sounds on or off, separately from the data sounds
+const uiBtn = document.getElementById('ui-btn');
+uiBtn.setAttribute('aria-pressed', String(uiSoundsOn));
+function toggleUiSounds() {
+  uiSoundsOn = !uiSoundsOn;
+  uiBtn.setAttribute('aria-pressed', String(uiSoundsOn));
+  try { localStorage.setItem(UI_KEY, uiSoundsOn ? 'on' : 'off'); } catch (e) { /* not saved */ }
+  uiSound('press');  // switched on: a soft tick as a demo; switched off: silence
+  announce(uiSoundsOn ? 'Interface sounds on.' : 'Interface sounds off.');
+}
+uiBtn.addEventListener('click', toggleUiSounds);
+// Every other button answers with a soft tick (the zoom buttons and Start / Stop behave on their own)
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('button');
+  if (b && !['start', 'zin', 'zout', 'zreset', 'ui-btn'].includes(b.id)) uiSound('press');
+});
 
 // ---- Keyboard: arrow keys move one step, Shift + arrow moves four ----
 const ARROWS = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
@@ -948,6 +1034,7 @@ const GUIDE = "Earth Jukebox turns NASA's sea surface temperature map into sound
   'Press W to hear where you are, R to repeat, H for help, and Space to stop or start the sound.';
 const HELP = 'Arrow keys move over the map. Hold Shift to move faster. W says where you are. ' +
   'Plus and minus zoom in and out, and zero shows the whole map. G turns the grid on or off. ' +
+  'U turns the interface sounds on or off. ' +
   'R repeats the last message. Space starts or stops the sound. ' +
   'Control, Alt and B reopen the accessibility options.';
 
@@ -988,6 +1075,7 @@ function setScreenNow(name) {  // first paint: no animation
 function showScreen(name, then) {
   const ticket = ++moving;
   const to = SCREENS[name];
+  uiSound(name === 'app' ? 'enter' : 'leave');  // a soft rising pair when the map opens, a falling pair when it closes
   const from = Object.values(SCREENS).find((el) => el !== to && !el.hidden);  // the other screen, if it is on show
   screen = name;
   for (const el of Object.values(SCREENS)) el.classList.remove('is-leaving', 'is-entering');
@@ -1123,6 +1211,7 @@ document.addEventListener('keydown', (e) => {
   else if (k === '-' || k === '_') stepZoom(-1);
   else if (k === '0') resetView();
   else if (k === 'g') toggleGrid();
+  else if (k === 'u') toggleUiSounds();
 });
 
 // ---- Start: the landing screen, unless this visitor already chose ----

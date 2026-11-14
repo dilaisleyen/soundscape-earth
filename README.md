@@ -19,22 +19,22 @@ Made for the NASA International Space Apps Challenge 2026, challenge **The Earth
 
 The value of the pixel under the pointer decides what you hear:
 
-| Under the pointer | Sound |
-|---|---|
-| Normal water (about 0 °C) | A soft, steady, neutral chord. |
-| Warmer than normal | The chord opens up, gets brighter and louder, and a high shimmering layer joins in. The warmer, the livelier. |
-| Colder than normal | The chord gets darker and weaker, and a distant, hollow wind takes over. The colder, the emptier. |
-| Land | A dull, rough knock, like a step on wood or stone. |
-| Ice / no data | A single lonely, cold glass note far away. |
-| Longitude | The sound moves from the left speaker (180° W) to the right speaker (180° E). |
-| Always | A very quiet ambient bed that slowly breathes (one breath about every 7 seconds), with a tiny rising note now and then. It stands for rebirth, life and vitality. |
+| Under the pointer | Theme | Sound |
+|---|---|---|
+| Normal water (within 0.25 °C of 0) | **calm** | A soft, steady, neutral chord. |
+| Warmer than normal | **heartwarming** | The chord opens up, gets brighter and louder, and a high shimmering layer joins in. The warmer, the livelier. |
+| Colder than normal | **melancholy** | The chord gets darker and weaker, and a distant, hollow wind takes over. The colder, the emptier. |
+| Land | **grounded** | A dull, rough knock, like a step on wood or stone. |
+| Ice / no data | **solitude** | A single lonely, cold glass note far away. |
+| Longitude | | The sound moves from the left speaker (180° W) to the right speaker (180° E). |
+| Always | | A very quiet ambient bed that slowly breathes (one breath about every 7 seconds), with a tiny rising note now and then. It stands for rebirth, life and vitality. |
 
-The sound design was described and decided by the team; the mapping lives in `soundFor()`, `hitLand()`, `hitIce()` and the ambient code in `index.html`.
+The five themes are the team's names for the character of each kind of place. The name of the current theme is shown in the side panel and spoken with every position. The 0.25 °C "calm" limit only chooses the label: the sound has no dead zone and follows the value from 0 onwards, so +0.5 °C sounds slightly warm and +4 °C very warm. The sound design was described and decided by the team; the mapping lives in `soundFor()`, `hitLand()`, `hitIce()` and the ambient code in `index.html`.
 
 ## Controls
 
 | Action | Mouse / touch | Keyboard |
-|---|---|---|
+|---|---|---|---|
 | Hear a place | Hover (mouse) or slide one finger | Tab to the map, then arrow keys (Shift = bigger steps) |
 | Zoom | Wheel, pinch with two fingers, `+` / `-` buttons | `+`, `-`, `0` (whole map) |
 | Move the zoomed map | Drag (mouse), two fingers (touch) | Arrow keys follow the ring |
@@ -43,9 +43,14 @@ The sound design was described and decided by the team; the mapping lives in `so
 | Help | | `H` |
 | Start / stop the sound | Start sound button | `Space` |
 | Grid on / off | Grid button | `G` |
+| Interface sounds on / off | UI sounds button | `U` |
 | Accessibility options | Accessibility options button | `Ctrl` + `Alt` + `B` |
 
 The page has two separate screens. The **landing screen** opens first and asks whether you want blind assistance (`F` = yes, `J` = no). You can choose the built-in voice (the page speaks by itself) or your own screen reader, and hear a short spoken guide. Then the **map screen** opens. "Accessibility options" (or `Ctrl` + `Alt` + `B`) takes you back to the landing screen; the sound keeps playing while you move between the screens.
+
+## Interface sounds
+
+Buttons, zoom and the change between the two screens answer with very soft notes from the same A and E family as the chords (a tick for buttons, a small rise or fall for zoom, a rising or falling pair for the screens). They are much quieter than the data sounds, which always stay in front, and they are only heard while the sound is running. The **UI sounds** button (or `U`) switches them off without touching the data sounds.
 
 ## Accessibility
 
