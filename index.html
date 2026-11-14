@@ -40,9 +40,24 @@
   /* The map: a framed 2:1 stage. Two canvases and the zoom buttons sit on top of each other inside it. */
   #frame { border:1px solid var(--line); border-radius:16px; overflow:hidden; background:#000; box-shadow:0 20px 60px rgba(0,0,0,.5); }
   /* The time slider under the map: one picture per month, plus the latest */
-  #timebar { display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; margin-top:8px; min-height:40px; }
+  #timebar { display:flex; flex-direction:column; gap:4px; margin-top:8px; }
+  .tb-row { display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; min-height:36px; }
   #timebar label { font-weight:600; font-size:15px; }
-  #time { flex:1; min-width:120px; height:32px; accent-color:var(--gold); cursor:pointer; }
+  #datagroup { display:flex; flex-wrap:wrap; gap:6px; }
+  #datagroup .tool { min-height:32px; padding:4px 12px; font-size:14px; }
+  #year-big { min-width:3.9em; font-size:clamp(24px, 2.6vw, 32px); line-height:1; font-weight:700; color:var(--gold); font-variant-numeric:tabular-nums; }
+  #year-slider { flex:1; min-width:140px; height:32px; accent-color:var(--gold); cursor:pointer; }
+  #year-slider:disabled { cursor:not-allowed; opacity:.45; }
+  #year-text { flex:0 1 auto; font-size:14px; min-width:0; }
+  #year-status { color:var(--muted); font-size:13px; }
+  #year-status:empty { display:none; }
+  #lg-ref { margin:8px 0 0; font-size:12px; line-height:1.35; color:var(--muted); }
+  #chart { padding:10px 12px; background:var(--panel); border:1px solid var(--line); border-radius:14px; }
+  #chart[hidden] { display:none; }
+  .chart-title { font-size:13px; color:var(--muted); margin-bottom:4px; }
+  #chart-canvas { display:block; width:100%; height:120px; }
+  #chart-text { margin:6px 0 0; font-size:13px; line-height:1.35; }
+  #basemap .leaflet-year { opacity:0; transition:opacity 220ms var(--ease-out); }
   #opgroup { display:flex; align-items:center; gap:8px; flex:0 0 auto; }
   #opgroup label { font-weight:600; font-size:15px; }
   #sst-op { width:110px; height:32px; accent-color:var(--gold); cursor:pointer; }
@@ -52,12 +67,9 @@
   .tool:disabled { opacity:.5; cursor:not-allowed; }
   #lg-note { margin:8px 0 0; font-size:13px; color:var(--muted); }
   #lg-note[hidden] { display:none; }
-  #time-date { min-width:6.5em; text-align:right; font-weight:600; font-variant-numeric:tabular-nums; color:var(--gold); }
-  #time-status, #live-status { color:var(--muted); font-size:13px; }
+  #live-status { color:var(--muted); font-size:13px; }
   #live-status { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   #live-btn { min-height:32px; padding:4px 12px; font-size:14px; }
-  #time-status:empty { display:none; }
-  #time:disabled { cursor:not-allowed; opacity:.5; }
   #stage { position:relative; width:100%; aspect-ratio:2 / 1; }
   #stage canvas { position:absolute; inset:0; width:100%; height:100%; display:block; }
   #map { cursor:crosshair; touch-action:none; }
@@ -177,8 +189,9 @@
     .sub { display:none; }
     #zoombar button { width:40px; height:40px; }
     .tool { font-size:14px; padding:8px 10px; min-height:40px; }  /* the three header buttons fit in one row */
-    #timebar { flex-wrap:wrap; gap:4px 10px; }
-    #time-status { flex-basis:100%; }
+    #chart-canvas, .chart-title, #lg-ref { display:none; }  /* on a phone the bar under the map stays small: the sentence under the chart carries the same facts, and the “normal” note is in the explanation panel */
+    #chart { padding:0; background:none; border:0; border-radius:0; }
+    #chart-text { margin:0; font-size:12px; }
   }
   @media (max-width: 359px) {
     .readout { grid-template-columns:auto auto; }
@@ -206,7 +219,7 @@
   /* Reduced motion: no drifting or pressing, only short fades */
   @media (prefers-reduced-motion: reduce) {
     :root { --t-in:120ms; --t-out:80ms; }
-    #basemap .leaflet-overlay-pane { transition:none; }
+    #basemap .leaflet-overlay-pane, #basemap .leaflet-year { transition:none; }
     .view.is-leaving, .view.is-entering { transform:none; }
     .tool:active, #w-actions button:active, #zoombar button:active { transform:none; }
   }
@@ -253,13 +266,21 @@
   </div>
   </div>
   <div id="timebar">
-    <label for="time">Time</label>
-    <input id="time" type="range" min="0" max="29" step="1" value="29" aria-valuetext="11 Nov 2026">
-    <output id="time-date" for="time">11 Nov 2026</output>
-    <button id="live-btn" class="tool" type="button" aria-pressed="true" title="Ask NASA GIBS for finer, up-to-date pictures of the area on screen">Live detail</button>
-    <span id="live-status"></span>
-    <span id="time-status"></span>
+    <div class="tb-row">
+      <div id="datagroup" role="group" aria-label="Data shown on the map">
+        <button id="data-latest" class="tool" type="button" aria-pressed="true" title="The NASA EIC picture of the latest day">Latest (NASA EIC)</button>
+        <button id="data-years" class="tool" type="button" aria-pressed="false" title="13 November of every year from 2002, and today">Through the years (2002–today)</button>
+      </div>
+      <button id="live-btn" class="tool" type="button" aria-pressed="true" title="Ask NASA GIBS for finer, up-to-date pictures of the area on screen">Live detail</button>
+      <span id="live-status"></span>
     <span id="opgroup"><label for="sst-op">Data opacity</label><input id="sst-op" type="range" min="0" max="100" step="5" value="75" aria-valuetext="75 percent" disabled><output id="sst-op-val" for="sst-op">75%</output></span>
+    </div>
+    <div class="tb-row" id="yearbar">
+      <output id="year-big" for="year-slider">Latest</output>
+      <input id="year-slider" type="range" min="0" max="24" step="1" value="24" disabled aria-label="Year: 13 November of each year from 2002 to 2025, then today" aria-valuetext="Today">
+      <span id="year-text"></span>
+      <span id="year-status" role="status"></span>
+    </div>
   </div>
 </div>
 
@@ -283,6 +304,13 @@
     <div class="lg-ticks"><span>&minus;4</span><span>&minus;2</span><span>0</span><span>+2</span><span>+4 &deg;C</span></div>
     <div class="lg-other"><span><i class="sw land"></i>Land</span><span><i class="sw ice"></i>Ice / no data</span></div>
     <p id="lg-note" hidden>Switch to Data view to see these colours on the map.</p>
+    <p id="lg-ref"></p>
+  </section>
+
+  <section id="chart" aria-label="This spot through the years" hidden>
+    <div class="chart-title">This spot through the years (°C)</div>
+    <canvas id="chart-canvas" aria-hidden="true"></canvas>
+    <p id="chart-text" aria-live="off">Move over the map to see how that place changed from year to year.</p>
   </section>
 
   <div id="side-extra" tabindex="0" role="region" aria-label="Explanation of the sound (scrollable)">
@@ -293,7 +321,7 @@
   </div>
 </aside>
 
-<p id="source">Map: NASA SVS #5176 &middot; Base map and live detail: NASA GIBS &middot; Data: JPL MUR SST &middot; Names: Natural Earth &middot; <button id="about-btn" class="linklike" type="button">About &amp; sources</button></p>
+<p id="source">Map: NASA SVS #5176 &middot; Years, base map and live detail: NASA GIBS &middot; Data: JPL MUR SST &middot; Names: Natural Earth &middot; <button id="about-btn" class="linklike" type="button">About &amp; sources</button></p>
 
 <dialog id="about" aria-labelledby="about-title">
   <h2 id="about-title">About &amp; sources</h2>
@@ -302,7 +330,7 @@
   </div>
   <p>NASA imagery and data used here are provided by NASA and used under <a href="https://www.nasa.gov/nasa-brand-center/images-and-media/" target="_blank" rel="noopener">NASA's Media Usage Guidelines</a>. The pictures in data/nasa/ are copies kept in this project. When you are online, the page also asks NASA's GIBS service for the base map under the temperature picture (Blue Marble, so land shows detail when you zoom in) and for finer, up-to-date pictures of the area on screen (the Live detail button switches the second off); nothing else is requested from NASA's servers. Without the network the page shows the saved picture alone. NASA does not endorse this project.</p>
   <p>The base map is shown with <a href="https://leafletjs.com/" target="_blank" rel="noopener">Leaflet</a> (BSD 2-Clause licence, &copy; Volodymyr Agafonkin), kept in this project in vendor/leaflet/. Leaflet only draws; the values, sounds and spoken texts are read from the saved picture and the live detail, never from the base map.</p>
-  <p>The pictures do not update by themselves. 0&nbsp;&deg;C means &ldquo;same as normal&rdquo;; the source page does not state which reference period &ldquo;normal&rdquo; is based on. Values are read from the colours of the picture, so they are approximate, and the colour scale ends at &plusmn;4&nbsp;&deg;C. The live detail comes in classes of 0.1&nbsp;&deg;C that end at &plusmn;3&nbsp;&deg;C, and it is a different product from the saved picture (GIBS&rsquo;s MUR anomaly instead of the SVS one), so the two typically differ by about 0.3&nbsp;&deg;C.</p>
+  <p>The pictures do not update by themselves. In the Latest view, 0&nbsp;&deg;C means &ldquo;same as normal&rdquo;; the source page does not state which reference period &ldquo;normal&rdquo; is based on. In the Through the years view the pictures are GIBS&rsquo;s MUR25 sea surface temperature anomaly (0.25&deg;), 13 November of each year from 2002 to 2025 and &ldquo;Today&rdquo; (the day written in the list of sources, not looked up by the page); there &ldquo;normal&rdquo; is the average for the same calendar day over 2003&ndash;2014 (PO.DAAC, MUR25 v4.2) and the colour scale ends at &plusmn;3&nbsp;&deg;C. Values are read from the colours of the picture, so they are approximate, and the colour scale ends at &plusmn;4&nbsp;&deg;C. The live detail comes in classes of 0.1&nbsp;&deg;C that end at &plusmn;3&nbsp;&deg;C, and it is a different product from the saved picture (GIBS&rsquo;s MUR anomaly instead of the SVS one), so the two typically differ by about 0.3&nbsp;&deg;C.</p>
   <p>Country names: Natural Earth (public domain), <em>Admin 0 &ndash; Countries</em>, 1:50m, naturalearthdata.com. They are a label layer only: the sound and the values never use them. The place named for the pointer is approximate: a country is named only when it is clearly the closest one, otherwise the continent is named.</p>
   <p>Earth Jukebox is a prototype made for the NASA International Space Apps Challenge 2026. It is not an official NASA website, and NASA does not endorse this project.</p>
   <button id="about-close" class="tool" type="button" autofocus>Close</button>
@@ -367,6 +395,8 @@ const lockMark = document.getElementById('lockmark');
 // first drawing already looks at it. 'off': only the saved picture is shown. 'trying': tiles are being asked for, the
 // saved picture is still shown. 'on': tiles and the picture as a see-through overlay are shown.
 let tilesState = 'off';
+let dataView = 'latest';   // 'latest' (the NASA EIC picture) or 'years' (25 steps, see "Data views")
+let yearShown = -1, yearData = null;  // the step on screen and its classes
 let viewMode = 'earth';   // 'earth': only the base map is shown; 'data': the temperature layers are shown over it (see applyView)
 let sstOpacity = 0.75;    // how solid the temperature layers are in the Data view
 let lmap = null, baseLayer = null, sstOverlay = null, liveOverlay = null;
@@ -861,9 +891,12 @@ function render() {
   const W = canvas.width, H = canvas.height, b = viewBox();
   view.clearRect(0, 0, W, H);
   if (tilesState === 'off' || (tilesState === 'trying' && viewMode === 'data')) {  // no base map (yet): the saved picture (and the live detail) are drawn here, as before
-    view.imageSmoothingEnabled = W / b.w < 3;  // zoomed in far: show the real pixels instead of a blur
-    view.drawImage(data, b.x, b.y, b.w, b.h, 0, 0, W, H);
-    drawDetail(b);  // the live picture from GIBS, if there is one for this area
+    if (dataView === 'years' && yearData) drawYearCanvas(b);
+    else {
+      view.imageSmoothingEnabled = W / b.w < 3;  // zoomed in far: show the real pixels instead of a blur
+      view.drawImage(data, b.x, b.y, b.w, b.h, 0, 0, W, H);
+      drawDetail(b);  // the live picture from GIBS, if there is one for this area
+    }
   }
   syncBaseMap(b);  // with the base map, Leaflet shows the same part of the world, with the pictures as see-through overlays
   drawGrid(b);
@@ -952,20 +985,11 @@ function placeTip() {
   tip.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
 }
 
-// Colour scale under the map: drawn from the same colour table the values are read with
-(function drawLegend() {
-  const c = document.getElementById('lg-canvas'), g = c.getContext('2d');
-  for (let x = 0; x < c.width; x++) {
-    const v = -4 + 8 * x / (c.width - 1);
-    let best = LUT[0];
-    for (const row of LUT) if (Math.abs(row[0] - v) < Math.abs(best[0] - v)) best = row;
-    g.fillStyle = `rgb(${best[1]},${best[2]},${best[3]})`;
-    g.fillRect(x, 0, 1, c.height);
-  }
-})();
+// (The colour scale under the map is drawn by drawLegend, in the "Data views" section.)
 function setPin(value) {  // the white triangle above the colour scale
   lgPin.hidden = value === null;
-  if (value !== null) lgPin.style.left = (Math.max(-4, Math.min(4, value)) + 4) / 8 * 100 + '%';
+  const range = dataView === 'years' ? 3 : 4;  // the colour scale of the view that is shown
+  if (value !== null) lgPin.style.left = (Math.max(-range, Math.min(range, value)) + range) / (2 * range) * 100 + '%';
 }
 
 // ---- One function for every way of pointing at the map (mouse, finger or keyboard) ----
@@ -980,8 +1004,16 @@ function probe(x, y, announceIt, quiet) {  // quiet: update the readout only, wi
   // flat map: left edge = -180°, right edge = +180°, top = 90°N, bottom = 90°S
   const lon = x / MAP_W * 360 - 180;
   const lat = 90 - y / MAP_H * 180;
-  const live = detailAt(lon, lat);  // the finer live picture, where there is one with data
-  if (live) { result = { type: 'ocean', value: live.value }; [r, g, b] = live.color; }
+  if (dataView === 'years') {
+    // The step on screen, in GIBS's colours. The saved picture only tells land from ice. A sea spot without data in
+    // this step counts as "ice / no data"; a spot the step has data for is sea, whatever the saved picture says.
+    const y = yearAt(lon, lat);
+    if (y) { result = { type: 'ocean', value: y.value }; [r, g, b] = y.color; }
+    else if (result.type === 'ocean') { result = { type: 'ice' }; [r, g, b] = [178, 178, 178]; }
+  } else {
+    const live = detailAt(lon, lat);  // the finer live picture, where there is one with data
+    if (live) { result = { type: 'ocean', value: live.value }; [r, g, b] = live.color; }
+  }
   if (!quiet) updateSound(result, lon);
 
   const place = placeName(result.type, lat, lon);
@@ -1245,8 +1277,9 @@ const GUIDE = "Earth Jukebox turns NASA's sea surface temperature map into sound
   'Press W to hear where you are, R to repeat, H for help, and Space to stop or start the sound.';
 const HELP = 'Arrow keys move over the map. Hold Shift to move faster. W says where you are. ' +
   'Plus and minus zoom in and out, and zero shows the whole map. G turns the grid on or off. ' +
-  'Click the map with the mouse to lock the sound on that spot, and right-click to release it. L turns the country names on or off. V switches between Earth view and Data view. U turns the interface sounds on or off. E says why the current place sounds the way it does, and D gives the details. ' +
+  'Click the map with the mouse to lock the sound on that spot, and right-click to release it. L turns the country names on or off. V switches between Earth view and Data view. C reads the line chart of the spot through the years. U turns the interface sounds on or off. E says why the current place sounds the way it does, and D gives the details. ' +
   'R repeats the last message. Space starts or stops the sound. ' +
+  'Under the map you can choose the latest picture or the years; in the years, Tab to the year slider, then use the left and right arrow keys, Home for 2002 and End for today. ' +
   'Control, Alt and B reopen the accessibility options.';
 
 function whereAmI() {
@@ -1312,12 +1345,12 @@ function coversView(d, want) {
 
 function scheduleDetail(now) {  // called after every drawing; waits until the view has been still for a moment
   clearTimeout(detailTimer);
-  if (!liveOn || document.getElementById('app').hidden) return;
+  if (!liveOn || dataView === 'years' || document.getElementById('app').hidden) return;
   detailTimer = setTimeout(loadDetail, now ? 0 : 400);
 }
 
 async function loadDetail() {
-  if (!liveOn) return;
+  if (!liveOn || dataView === 'years') return;
   if (FRAMES[frameShown][1] === null && liveDateState === 'pending') return;  // wait for the newest date (it re-schedules us)
   const want = wantedDetail();
   if (detail && detail.date === want.date && detail.frame === want.frame && coversView(detail, want)) { setLive(`NASA GIBS, ${niceDate(detail.date)}`); return; }
@@ -1337,7 +1370,7 @@ async function loadDetail() {
     const picture = await createImageBitmap(blob);
     if (control.signal.aborted) return;
     const result = decodeDetail(picture, want);
-    if (want.frame !== frameShown || !liveOn) return;  // the slider moved on while the picture was coming
+    if (want.frame !== frameShown || !liveOn || dataView === 'years') return;  // the view changed while the picture was coming
     detail = result;
     detailFailedKey = '';
     setLive(`NASA GIBS, ${niceDate(result.date)}`);
@@ -1373,7 +1406,7 @@ function decodeDetail(picture, want) {
 
 function refreshAfterDetail() {
   render();
-  timeDate.textContent = frameLabel(frameShown);
+  updateYearLabels();
   if (lastProbe) probe(cursor.x, cursor.y, false, !(tipOn || markerOn || lock));  // read the same spot again, now in finer detail
 }
 
@@ -1412,7 +1445,7 @@ function toggleLive() {
     clearTimeout(detailTimer);
     detail = null;
     setLive('');
-    timeDate.textContent = frameLabel(frameShown);
+    updateYearLabels();
     render();
     if (lastProbe) probe(cursor.x, cursor.y, false, !(tipOn || markerOn || lock));
   } else {
@@ -1431,111 +1464,391 @@ fetch(GIBS.caps).then((r) => r.ok ? r.text() : Promise.reject(new Error(`HTTP ${
   scheduleDetail(true);
 }).catch(() => { liveDateState = 'failed'; scheduleDetail(true); });  // offline: the next attempt fails too and the saved picture is used
 
-// ---- Time slider: one picture per month, plus the latest ----
-// Source: NASA SVS #5176, one frame for the first available day of each month from June 2024, and the latest frame
-// (11 November 2026). NASA publishes these frames only as 4096 x 2048 EXR files, so each one was converted to a
-// 1024 x 512 JPEG picture. The picture shown at the start is the latest frame, which is inside this page; the others
-// are small files in data/nasa/sst/frames/ that load when you move the slider. Every frame is read with the same colour table.
-const FRAMES = [
-  ['2024-06-01', 'data/nasa/sst/frames/sst_20240601.jpg'],
-  ['2024-07-01', 'data/nasa/sst/frames/sst_20240701.jpg'],
-  ['2024-08-01', 'data/nasa/sst/frames/sst_20240801.jpg'],
-  ['2024-09-01', 'data/nasa/sst/frames/sst_20240901.jpg'],
-  ['2024-10-01', 'data/nasa/sst/frames/sst_20241001.jpg'],
-  ['2024-11-01', 'data/nasa/sst/frames/sst_20241101.jpg'],
-  ['2024-12-01', 'data/nasa/sst/frames/sst_20241201.jpg'],
-  ['2025-01-01', 'data/nasa/sst/frames/sst_20250101.jpg'],
-  ['2025-02-01', 'data/nasa/sst/frames/sst_20250201.jpg'],
-  ['2025-03-01', 'data/nasa/sst/frames/sst_20250301.jpg'],
-  ['2025-04-01', 'data/nasa/sst/frames/sst_20250401.jpg'],
-  ['2025-05-01', 'data/nasa/sst/frames/sst_20250501.jpg'],
-  ['2025-06-01', 'data/nasa/sst/frames/sst_20250601.jpg'],
-  ['2025-07-01', 'data/nasa/sst/frames/sst_20250701.jpg'],
-  ['2025-08-01', 'data/nasa/sst/frames/sst_20250801.jpg'],
-  ['2025-09-01', 'data/nasa/sst/frames/sst_20250901.jpg'],
-  ['2025-10-01', 'data/nasa/sst/frames/sst_20251001.jpg'],
-  ['2025-11-01', 'data/nasa/sst/frames/sst_20251101.jpg'],
-  ['2025-12-01', 'data/nasa/sst/frames/sst_20251201.jpg'],
-  ['2026-01-01', 'data/nasa/sst/frames/sst_20260101.jpg'],
-  ['2026-02-01', 'data/nasa/sst/frames/sst_20260201.jpg'],
-  ['2026-03-01', 'data/nasa/sst/frames/sst_20260301.jpg'],
-  ['2026-04-01', 'data/nasa/sst/frames/sst_20260401.jpg'],
-  ['2026-05-01', 'data/nasa/sst/frames/sst_20260501.jpg'],
-  ['2026-06-01', 'data/nasa/sst/frames/sst_20260601.jpg'],
-  ['2026-07-01', 'data/nasa/sst/frames/sst_20260701.jpg'],
-  ['2026-08-01', 'data/nasa/sst/frames/sst_20260801.jpg'],
-  ['2026-09-01', 'data/nasa/sst/frames/sst_20260901.jpg'],
-  ['2026-10-01', 'data/nasa/sst/frames/sst_20261001.jpg'],
-  ['2026-11-11', null],
-];
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const timeInput = document.getElementById('time');
-const timeDate = document.getElementById('time-date');
-const timeStatus = document.getElementById('time-status');
-const frameCache = new Map();             // frame number -> its loaded picture
-let frameShown = FRAMES.length - 1;       // the picture now in the hidden canvas (the latest, at the start)
-let frameWanted = frameShown;             // the one the slider is on (it may still be loading)
-let framesUsable = location.protocol !== 'file:';  // a page opened as a file cannot read pixels of other files
+// ---- Data views: the latest NASA EIC picture, or 25 steps through the years ----
+// "Latest (NASA EIC)" is the picture the page opens with (NASA SVS #5176, 11 November 2026), with its own colour scale.
+// Its values are read from the colours of that picture (the LUT), and the live detail of NASA GIBS can sharpen it.
+// "Through the years" has 25 steps: 13 November of every year from 2002 to 2025, and "Today" (the newest day the GIBS
+// layer had when data/nasa/sst-yearly/mur25_today.png was downloaded; its date is written in SOURCES.json, and
+// scripts/fetch_nasa_data.py --only today replaces it; the page never looks for a newer day by itself). The pictures are
+// GIBS's MUR25 sea surface temperature anomaly layer in GIBS's own colours (62 classes of 0.1 degrees C, -3 to +3, see
+// GIBS_CLASSES, which is built from GIBS's colour table). Each picture is turned into a class number for every pixel when
+// it is loaded; the colour of a pixel is only ever looked up in that table, so every step uses the same table.
+// Land, ice and places without data are see-through in those pictures; the land / ice mask of the latest picture (the
+// original, never changed) tells which of the two a spot is, as it does for the live detail.
+// Pictures load when they are needed: the page opens with none of them. The step you ask for comes first; the rest follow
+// quietly (the line chart needs all of them).
+const YEAR_FIRST = 2002, YEAR_LAST = 2025;
+const YEARS = [];
+for (let y = YEAR_FIRST; y <= YEAR_LAST; y++) YEARS.push({ year: y, date: `${y}-11-13`, file: `data/nasa/sst-yearly/mur25_${y}-11-13.png` });
+YEARS.push({ year: null, date: null, today: true, file: 'data/nasa/sst-yearly/mur25_today.png' });  // its date comes from SOURCES.json
+const TODAY = YEARS.length - 1;
+const GIBS_NATIVE = GIBS_CLASSES.map((c) => ((255 << 24) | (c[2] << 16) | (c[1] << 8) | c[0]) >>> 0);  // GIBS's own colour of each class, as a pixel
+const FULL_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const yearsUsable = location.protocol !== 'file:';  // a page opened as a file cannot read pixels of other files
+const yearCache = new Map(), yearPending = new Map();   // step -> { cls, w, h }; step -> a load in progress
+const yearCanvases = [document.createElement('canvas'), document.createElement('canvas')];  // two, so one step can fade into the next
+for (const c of yearCanvases) { c.width = 2048; c.height = 1024; }
+let yearFront = 0;                // which of the two shows the step that is on screen
+let yearWanted = TODAY;           // the step the slider is on (it may still be loading)
+let todayDate = null;             // the date of the "Today" picture, from SOURCES.json
+let viewToken = 0;                // counts changes of the data view, so a late answer of an older change is ignored
+let prefetchToken = 0;
+const dataLatestBtn = document.getElementById('data-latest');
+const dataYearsBtn = document.getElementById('data-years');
+const yearSlider = document.getElementById('year-slider');
+const yearBig = document.getElementById('year-big');
+const yearText = document.getElementById('year-text');
+const yearStatus = document.getElementById('year-status');
+const lgTicks = document.querySelector('.lg-ticks');
+const lgRef = document.getElementById('lg-ref');
+const chartBox = document.getElementById('chart');
+const chartCanvas = document.getElementById('chart-canvas');
+const chartText = document.getElementById('chart-text');
+const FRAMES = [['2026-11-11', null]];  // the latest picture (kept as a list: the live detail asks which picture it is for)
+let frameShown = 0;
 
-function frameLabel(i) {  // the date of what is really on screen: the live picture's day when it is in use
+function longDate(iso) { const [y, m, d] = iso.split('-'); return `${+d} ${FULL_MONTHS[+m - 1]} ${y}`; }
+function stepName(i) {  // 2008 or Today
+  return YEARS[i].today ? 'Today' : String(YEARS[i].year);
+}
+function stepDate(i) {  // the day of a step, in words
+  if (YEARS[i].today) return todayDate ? longDate(todayDate) : null;
+  return longDate(YEARS[i].date);
+}
+function stepText(i) {  // under the big year
+  if (YEARS[i].today) return `Latest satellite data — the ocean today${todayDate ? ` (${longDate(todayDate)})` : ''}`;
+  return stepDate(i);
+}
+function stepSpoken(i) {
+  return YEARS[i].today ? `Today. ${stepText(i)}` : stepDate(i);
+}
+function frameLabel(i) {  // the date of what is really on screen in the Latest view: the live picture's day when it is in use
   const iso = detail && liveOn && detail.frame === i ? detail.date : FRAMES[i][0];
   const [y, m, d] = iso.split('-');
   return `${+d} ${MONTHS[+m - 1]} ${y}`;
 }
-function disableFrames(why) {
-  framesUsable = false;
-  timeInput.disabled = true;
-  timeStatus.textContent = why;
-}
-if (!framesUsable) disableFrames('The time slider needs the hosted version: open the page from its web address, not as a file.');
-timeInput.max = String(FRAMES.length - 1);
-timeInput.value = String(FRAMES.length - 1);
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-// Can the browser read the pixels of this picture? (It cannot when the page is opened as a file.)
-function readable(im) {
-  try {
-    const t = document.createElement('canvas');
-    t.width = t.height = 1;
-    const c = t.getContext('2d');
-    c.drawImage(im, 0, 0, 1, 1);
-    c.getImageData(0, 0, 1, 1);
-    return true;
-  } catch (e) {
-    return false;
+// ---- Colour scales and the "normal" note, for the view that is shown ----
+function drawLegend(kind) {
+  const c = document.getElementById('lg-canvas'), g = c.getContext('2d');
+  for (let x = 0; x < c.width; x++) {
+    if (kind === 'years') {  // GIBS's own colours, -3 to +3
+      const v = -3 + 6 * x / (c.width - 1);
+      const k = Math.max(0, Math.min(GIBS_CLASSES.length - 1, Math.floor((v + 3) / 0.1 + 1e-9)));
+      g.fillStyle = `rgb(${GIBS_CLASSES[k][0]},${GIBS_CLASSES[k][1]},${GIBS_CLASSES[k][2]})`;
+    } else {  // the colour bar of NASA's picture, -4 to +4
+      const v = -4 + 8 * x / (c.width - 1);
+      let best = LUT[0];
+      for (const row of LUT) if (Math.abs(row[0] - v) < Math.abs(best[0] - v)) best = row;
+      g.fillStyle = `rgb(${best[1]},${best[2]},${best[3]})`;
+    }
+    g.fillRect(x, 0, 1, c.height);
+  }
+  lgTicks.innerHTML = kind === 'years'
+    ? '<span>&minus;3</span><span>&minus;1.5</span><span>0</span><span>+1.5</span><span>+3 &deg;C</span>'
+    : '<span>&minus;4</span><span>&minus;2</span><span>0</span><span>+2</span><span>+4 &deg;C</span>';
+  lgRef.textContent = kind === 'years'
+    ? '“Normal” is the average for the same calendar day over 2003–2014 (PO.DAAC, MUR25 v4.2). The colours end at ±3 °C.'
+    : '“Normal”: NASA does not state which years this picture compares with. The colours end at ±4 °C.';
+}
+drawLegend('latest');
+function unitNote() {
+  return dataView === 'years'
+    ? '<p class="why-unit"><b>°C anomaly</b> is how many degrees warmer (+) or colder (−) than normal the water is. ' +
+      '<b>0 °C means normal</b>: the average for the same calendar day over 2003–2014 (PO.DAAC, MUR25 v4.2). This view shows 13 November of each year, and its colours end at ±3 °C.</p>'
+    : '<p class="why-unit"><b>°C anomaly</b> is how many degrees warmer (+) or colder (−) than normal the water is. ' +
+      '<b>0 °C means normal.</b> (NASA does not state which years “normal” is based on for this picture.)</p>';
+}
+
+// ---- Loading a step ----
+const tempCanvas = document.createElement('canvas');
+const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+function getYear(i) {
+  if (yearCache.has(i)) return Promise.resolve(yearCache.get(i));
+  if (yearPending.has(i)) return yearPending.get(i);
+  const p = (async () => {
+    const response = await fetch(YEARS[i].file);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const picture = await createImageBitmap(await response.blob());
+    const w = picture.width, h = picture.height;
+    tempCanvas.width = w; tempCanvas.height = h;
+    tempCtx.clearRect(0, 0, w, h);
+    tempCtx.drawImage(picture, 0, 0);
+    const src = new Uint32Array(tempCtx.getImageData(0, 0, w, h).data.buffer);
+    const cls = new Uint8Array(w * h);
+    for (let k = 0; k < src.length; k++) {
+      const px = src[k];
+      if ((px >>> 24) < 128) continue;  // see-through: land, ice or no data
+      cls[k] = CLASS_OF_COLOUR.get(px & 0xffffff) || nearestClass(px);
+    }
+    const f = { cls, w, h };
+    yearCache.set(i, f);
+    return f;
+  })();
+  yearPending.set(i, p);
+  p.then(() => yearPending.delete(i), () => yearPending.delete(i));
+  return p;
+}
+async function prefetchYears(first) {  // the other steps, nearest first, one at a time, while the page is quiet
+  const token = ++prefetchToken;
+  const order = YEARS.map((_, i) => i).sort((a, b) => Math.abs(a - first) - Math.abs(b - first));
+  for (const i of order) {
+    if (token !== prefetchToken || dataView !== 'years') return;
+    if (!yearCache.has(i)) { try { await getYear(i); } catch (e) { /* the chart simply lacks this step */ } scheduleChart(); }
+    await new Promise((r) => setTimeout(r, 30));
   }
 }
 
-function showFrame(i, picture) {
-  ctx.drawImage(picture, 0, 0, MAP_W, MAP_H);  // the hidden canvas: the saved picture, read where there is no live detail
-  frameShown = i;
-  detail = null;  // a live picture of another day must not stay on this one
-  render();
-  scheduleDetail(true);
-  // read the same spot again, in the new picture. The sound follows only if the pointer or keyboard is on the map.
-  if (lastProbe) probe(cursor.x, cursor.y, false, !(tipOn || markerOn || lock));
-  const text = lastProbe ? `${frameLabel(i)}. ${describe(lastProbe.result, lastProbe.place)}` : frameLabel(i);
-  timeInput.setAttribute('aria-valuetext', text);  // a screen reader reads this value text
-  if (mode === 'voice') speak(text);
+// The value under a point in the shown step, or null (no data there, or no step shown).
+function yearValue(f, lon, lat) {
+  if (!f) return null;
+  const col = Math.min(f.w - 1, Math.max(0, Math.floor((lon + 180) / 360 * f.w)));
+  const row = Math.min(f.h - 1, Math.max(0, Math.floor((90 - lat) / 180 * f.h)));
+  const c = f.cls[row * f.w + col];
+  return c ? c : 0;
+}
+function yearAt(lon, lat) {  // { value, color } in GIBS's colours, or null
+  const c = yearValue(yearData, lon, lat);
+  if (!c) return null;
+  return { value: GIBS_CLASSES[c - 1][3], color: GIBS_CLASSES[c - 1].slice(0, 3) };
 }
 
-function onTime() {
-  const i = +timeInput.value;
-  frameWanted = i;
-  timeDate.textContent = frameLabel(i);
-  timeInput.setAttribute('aria-valuetext', frameLabel(i));
-  if (FRAMES[i][1] === null) { timeStatus.textContent = ''; showFrame(i, img); return; }  // the latest frame: already here
-  if (frameCache.has(i)) { timeStatus.textContent = ''; showFrame(i, frameCache.get(i)); return; }
-  timeStatus.textContent = 'Loading…';
-  const im = new Image();
-  im.onload = () => {
-    if (!readable(im)) { disableFrames('The time slider needs the hosted version: open the page from its web address, not as a file.'); return; }
-    frameCache.set(i, im);
-    if (frameWanted === i) { timeStatus.textContent = ''; showFrame(i, im); }  // the slider may have moved on meanwhile
-  };
-  im.onerror = () => { if (frameWanted === i) timeStatus.textContent = `Could not load ${frameLabel(i)}.`; };
-  im.src = FRAMES[i][1];
+function paintYear(f, target) {
+  const g = target.getContext('2d');
+  const img = g.createImageData(f.w, f.h), out = new Uint32Array(img.data.buffer);
+  for (let k = 0; k < f.cls.length; k++) { const c = f.cls[k]; if (c) out[k] = GIBS_NATIVE[c - 1]; }
+  g.putImageData(img, 0, 0);
 }
-timeInput.addEventListener('input', onTime);
+// A step appears: it is painted on the hidden canvas, and the two cross-fade (CSS, shorter or none with reduced motion).
+function showYear(i, f) {
+  const back = 1 - yearFront;
+  paintYear(f, yearCanvases[back]);
+  yearCanvases[back].style.opacity = '1';
+  yearCanvases[yearFront].style.opacity = '0';
+  yearFront = back;
+  yearShown = i;
+  yearData = f;
+  render();
+  scheduleChart();
+  // read the same spot again, in this step. The sound follows only if the pointer or keyboard is on the map.
+  if (lastProbe) probe(cursor.x, cursor.y, false, !(tipOn || markerOn || lock));
+  const text = lastProbe ? `${stepSpoken(i)}. ${describe(lastProbe.result, lastProbe.place)}` : stepSpoken(i);
+  yearSlider.setAttribute('aria-valuetext', text);  // a screen reader reads this value text
+  if (mode === 'voice') speak(text);
+}
+function updateYearLabels() {
+  const i = dataView === 'years' ? yearWanted : null;
+  if (i === null) {
+    yearBig.textContent = 'Latest';
+    yearText.textContent = `NASA EIC picture, ${niceDate(FRAMES[0][0])}` + (detail && liveOn ? ` · live detail: ${niceDate(detail.date)}` : '');
+  } else {
+    yearBig.textContent = stepName(i);
+    yearText.textContent = stepText(i);
+  }
+  yearSlider.value = String(yearWanted);
+}
+
+async function onYear() {
+  const i = +yearSlider.value;
+  yearWanted = i;
+  updateYearLabels();
+  yearSlider.setAttribute('aria-valuetext', stepSpoken(i));
+  if (yearCache.has(i)) { yearStatus.textContent = ''; showYear(i, yearCache.get(i)); return; }
+  yearStatus.textContent = 'Loading…';
+  try {
+    const f = await getYear(i);
+    if (yearWanted === i && dataView === 'years') { yearStatus.textContent = ''; showYear(i, f); }  // the slider may have moved on meanwhile
+  } catch (e) {
+    if (yearWanted === i) yearStatus.textContent = `Could not load ${stepName(i)}.`;
+  }
+}
+yearSlider.addEventListener('input', onYear);
+
+// ---- Switching between the two views ----
+function applyDataView() {
+  const years = dataView === 'years';
+  dataLatestBtn.setAttribute('aria-pressed', String(!years));
+  dataYearsBtn.setAttribute('aria-pressed', String(years));
+  yearSlider.disabled = !years;
+  chartBox.hidden = !years;
+  drawLegend(years ? 'years' : 'latest');
+  liveBtn.disabled = years;
+  liveBtn.title = years ? 'Live detail belongs to the Latest view' : 'Ask NASA GIBS for finer, up-to-date pictures of the area on screen';
+  if (years) setLive('');
+  else if (liveOn) setLive('');
+  updateYearLabels();
+  whyShown = '';  // the “normal” note of the explanation panel changes with the view
+  renderWhy();
+}
+async function setDataView(v) {
+  if (v === dataView) return;
+  const token = ++viewToken;
+  if (v === 'years') {
+    if (!yearsUsable) { announce('The years need the hosted version: open the page from its web address, not as a file.'); return; }
+    yearStatus.textContent = 'Loading…';
+    dataYearsBtn.setAttribute('aria-busy', 'true');
+    let f;
+    try {
+      if (todayDate === null) {  // the date of the "Today" picture is written in SOURCES.json
+        fetch('data/nasa/SOURCES.json').then((r) => r.json()).then((doc) => {
+          const e = (doc.files || []).find((x) => x.latest_day);
+          if (e && e.data_date) { todayDate = e.data_date; if (dataView === 'years') updateYearLabels(); }
+        }).catch(() => {});
+      }
+      f = await getYear(yearWanted);
+    } catch (e) {
+      dataYearsBtn.removeAttribute('aria-busy');
+      if (token === viewToken) { yearStatus.textContent = ''; announce('The pictures of the years could not be loaded. The latest picture stays.'); }
+      return;
+    }
+    dataYearsBtn.removeAttribute('aria-busy');
+    if (token !== viewToken) return;  // the visitor changed their mind while it loaded
+    yearStatus.textContent = '';
+    dataView = 'years';
+    if (detailAbort) detailAbort.abort();
+    clearTimeout(detailTimer);
+    detail = null;
+    applyDataView();
+    showYear(yearWanted, f);
+    prefetchYears(yearWanted);
+    announce(`Through the years. ${stepSpoken(yearWanted)}. Use the year slider to change the year.`);
+  } else {
+    dataView = 'latest';
+    prefetchToken++;
+    yearData = null;
+    yearCanvases[0].style.opacity = '0'; yearCanvases[1].style.opacity = '0';
+    yearStatus.textContent = '';
+    applyDataView();
+    render();
+    scheduleDetail(true);
+    scheduleChart();
+    if (lastProbe) probe(cursor.x, cursor.y, false, !(tipOn || markerOn || lock));
+    announce(`Latest. The NASA EIC picture of ${frameLabel(0)}.`);
+  }
+}
+dataLatestBtn.addEventListener('click', () => setDataView('latest'));
+dataYearsBtn.addEventListener('click', () => setDataView('years'));
+if (!yearsUsable) { dataYearsBtn.disabled = true; yearStatus.textContent = 'The years need the hosted version: open the page from its web address, not as a file.'; }
+
+// ---- The chart: the value of the spot you are on in all 25 steps ----
+let chartQueued = false;
+function scheduleChart() {  // at most once per frame
+  if (chartQueued) return;
+  chartQueued = true;
+  requestAnimationFrame(() => { chartQueued = false; drawChart(); });
+}
+function chartValues() {  // value (or null) for every step; undefined while a step is not loaded yet
+  if (!lastProbe) return null;
+  const { lon, lat } = lastProbe;
+  return YEARS.map((_, i) => {
+    const f = yearCache.get(i);
+    if (!f) return undefined;
+    const c = yearValue(f, lon, lat);
+    return c ? GIBS_CLASSES[c - 1][3] : null;
+  });
+}
+function signed1(v) { const m = Math.abs(v).toFixed(1); return m === '0.0' ? '0.0' : (v > 0 ? '+' : '−') + m; }
+function chartSummary(vals) {
+  if (!vals) return 'Move over the map to see how that place changed from year to year.';
+  const have = vals.map((v, i) => [v, i]).filter(([v]) => typeof v === 'number');
+  const loaded = vals.filter((v) => v !== undefined).length;
+  if (!have.length) return loaded < vals.length ? `Loading the other years… (${loaded} of ${vals.length})` : 'There is no sea temperature data at this spot in any step (land, ice or no data).';
+  let lo = have[0], hi = have[0];
+  for (const h of have) { if (h[0] < lo[0]) lo = h; if (h[0] > hi[0]) hi = h; }
+  const name = (i) => (YEARS[i].today ? 'today' : String(YEARS[i].year));
+  let text = `Lowest ${name(lo[1])} ${signed1(lo[0])} °C, highest ${name(hi[1])} ${signed1(hi[0])} °C`;
+  const t = vals[TODAY];
+  if (typeof t === 'number') text += `, today ${signed1(t)} °C`;
+  else if (t === null) text += ', no data today';
+  text += '.';
+  if (loaded < vals.length) text += ` Still loading: ${loaded} of ${vals.length} years.`;
+  else if (have.length < vals.length) text += ` No data in ${vals.length - have.length} of ${vals.length} steps.`;
+  return text;
+}
+function drawChart() {
+  if (dataView !== 'years') return;
+  const vals = chartValues();
+  const text = chartSummary(vals);
+  if (chartText.textContent !== text) chartText.textContent = text;
+  const dpr = window.devicePixelRatio || 1, cw = chartCanvas.clientWidth, ch = chartCanvas.clientHeight;
+  if (!cw || !ch) return;
+  if (chartCanvas.width !== Math.round(cw * dpr) || chartCanvas.height !== Math.round(ch * dpr)) { chartCanvas.width = Math.round(cw * dpr); chartCanvas.height = Math.round(ch * dpr); }
+  const g = chartCanvas.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, cw, ch);
+  const L = 34, R = 10, T = 8, B = 22, pw = cw - L - R, ph = ch - T - B, n = YEARS.length;
+  const xOf = (i) => L + pw * i / (n - 1);
+  const nums = (vals || []).filter((v) => typeof v === 'number');
+  const top = Math.max(1, Math.ceil(Math.max(0, ...nums.map(Math.abs)) * 2) / 2);  // symmetric around 0, in steps of 0.5
+  const yOf = (v) => T + ph * (1 - (v + top) / (2 * top));
+  g.font = '11px system-ui, sans-serif';
+  g.textBaseline = 'middle';
+  // the 0 °C line is "normal"
+  g.strokeStyle = 'rgba(255,255,255,.55)'; g.setLineDash([4, 3]); g.lineWidth = 1;
+  g.beginPath(); g.moveTo(L, yOf(0)); g.lineTo(L + pw, yOf(0)); g.stroke(); g.setLineDash([]);
+  g.fillStyle = '#9fb0c2'; g.textAlign = 'right';
+  g.fillText('0', L - 5, yOf(0));
+  g.fillText(`+${top}`, L - 5, yOf(top)); g.fillText(`−${top}`, L - 5, yOf(-top));
+  g.strokeStyle = 'rgba(255,255,255,.12)';
+  for (const v of [top, -top]) { g.beginPath(); g.moveTo(L, yOf(v)); g.lineTo(L + pw, yOf(v)); g.stroke(); }
+  g.textAlign = 'left'; g.fillStyle = 'rgba(255,255,255,.7)';
+  g.fillText('normal', L + 4, yOf(0) - 8);
+  // years along the bottom
+  g.textBaseline = 'top'; g.fillStyle = '#9fb0c2';
+  for (let i = 0; i < n - 1; i += 4) {  // 2002, 2006, ... 2022
+    g.textAlign = i === 0 ? 'left' : 'center';
+    g.fillText(String(YEARS[i].year), i === 0 ? L - 12 : xOf(i), ch - B + 6);
+  }
+  g.textAlign = 'right'; g.fillText('Today', cw - 1, ch - B + 6);
+  // the chosen step
+  const sel = yearShown >= 0 ? yearShown : TODAY;
+  g.strokeStyle = '#ffd54a'; g.lineWidth = 1.5;
+  g.beginPath(); g.moveTo(xOf(sel), T); g.lineTo(xOf(sel), T + ph); g.stroke();
+  if (!vals) return;
+  // the line (broken where a step has no data or is not loaded yet)
+  g.strokeStyle = '#7cc4ff'; g.lineWidth = 2; g.lineJoin = 'round';
+  let open = false;
+  g.beginPath();
+  vals.forEach((v, i) => {
+    if (typeof v !== 'number') { open = false; return; }
+    if (!open) { g.moveTo(xOf(i), yOf(v)); open = true; } else g.lineTo(xOf(i), yOf(v));
+  });
+  g.stroke();
+  vals.forEach((v, i) => {
+    if (typeof v !== 'number') return;
+    g.fillStyle = i === sel ? '#ffd54a' : '#7cc4ff';
+    g.beginPath(); g.arc(xOf(i), yOf(v), i === sel ? 4 : 2.2, 0, Math.PI * 2); g.fill();
+  });
+}
+new ResizeObserver(() => scheduleChart()).observe(chartCanvas);
+
+// Without the base map the canvas draws the years view itself: a dark sea, the land and ice of the latest picture (the
+// original, only copied) and the step on top, in GIBS's colours.
+let landIceCanvas = null;
+function getLandIce() {
+  if (landIceCanvas) return landIceCanvas;
+  const px = ctx.getImageData(0, 0, MAP_W, MAP_H), d = px.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const r = d[i], g = d[i + 1], bl = d[i + 2];
+    if (!(Math.max(r, g, bl) - Math.min(r, g, bl) < 14 && readPixel(r, g, bl).type !== 'ocean')) d[i + 3] = 0;  // keep only land and ice
+  }
+  landIceCanvas = document.createElement('canvas');
+  landIceCanvas.width = MAP_W; landIceCanvas.height = MAP_H;
+  landIceCanvas.getContext('2d').putImageData(px, 0, 0);
+  return landIceCanvas;
+}
+function drawYearCanvas(b) {
+  const W = canvas.width, H = canvas.height;
+  view.fillStyle = '#0d2236';
+  view.fillRect(0, 0, W, H);
+  view.imageSmoothingEnabled = W / b.w < 3;
+  view.drawImage(getLandIce(), b.x, b.y, b.w, b.h, 0, 0, W, H);
+  const f = yearData, k = f.w / MAP_W;
+  view.imageSmoothingEnabled = W / b.w < 3 * k;  // the picture has more pixels than the saved one: blocks only when zoomed in far
+  view.drawImage(yearCanvases[yearFront], b.x * k, b.y * k, b.w * k, b.h * k, 0, 0, W, H);
+}
+
 
 // ---- Country labels: a visual layer, nothing more ----
 // The names are drawn on their own canvas, above the map and the grid. They never touch the hidden picture that
@@ -1605,8 +1918,6 @@ const WARMEST_SOUND = soundFor({ type: 'ocean', value: 4 });
 const COLDEST_SOUND = soundFor({ type: 'ocean', value: -4 });
 const whyBody = document.getElementById('why-body');
 const why = document.getElementById('why');
-const UNIT_NOTE = '<p class="why-unit"><b>°C anomaly</b> is how many degrees warmer (+) or colder (−) than normal the water is. ' +
-                  '<b>0 °C means normal.</b></p>';
 
 function signedValue(v) {
   const mag = Math.abs(v).toFixed(1);
@@ -1675,9 +1986,9 @@ let whyShown = '', whyQueued = false;
 function renderWhy() {
   const e = explain(lastProbe);
   const html = e
-    ? `<p class="why-head">${e.head}</p><p>${THEME_TEXT[e.theme]}</p>${UNIT_NOTE}` +
+    ? `<p class="why-head">${e.head}</p><p>${THEME_TEXT[e.theme]}</p>${unitNote()}` +
       `<dl>${e.rows.map(([term, text]) => `<dt>${term}</dt><dd>${text}</dd>`).join('')}</dl>`
-    : `${UNIT_NOTE}<p>Move over the map, or use the arrow keys, to see why a place sounds the way it does.</p>`;
+    : `${unitNote()}<p>Move over the map, or use the arrow keys, to see why a place sounds the way it does.</p>`;
   if (html !== whyShown) { whyBody.innerHTML = html; whyShown = html; }  // only touch the page when something changed
 }
 function scheduleWhy() {  // at most once per frame, however fast the pointer moves
@@ -1844,7 +2155,7 @@ function niceDate(iso) {
 function renderSources(doc) {
   const groups = new Map();  // pictures with the same source and credit are listed together
   for (const f of doc.files) {
-    const key = `${f.svs_id}|${f.attribution}`;
+    const key = `${f.svs_id}|${f.attribution}|${f.dataset}`;
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(f);
   }
@@ -1859,7 +2170,7 @@ function renderSources(doc) {
     link.href = f.page;
     link.target = '_blank';
     link.rel = 'noopener';
-    link.textContent = `SVS #${f.svs_id}`;
+    link.textContent = f.svs_id ? `SVS #${f.svs_id}` : (f.page_label || 'source');
     credit.append(title, ' (', link, '). ');
     const people = [];
     if (c.visualizer) people.push(`Visualizer: ${c.visualizer}.`);
@@ -1942,6 +2253,7 @@ document.addEventListener('keydown', (e) => {
   else if (k === 'u') toggleUiSounds();
   else if (k === 'l') toggleLabels();
   else if (k === 'v') toggleView();
+  else if (k === 'c') announce(dataView === 'years' ? chartSummary(chartValues()) : 'The chart belongs to the Through the years view. Choose it under the map first.');
   else if (k === 'e') explainShort();
   else if (k === 'd') explainDetail();
 });
@@ -2018,6 +2330,7 @@ function initBaseMap() {
     baseLayer.on('tileerror', () => { batchErr++; });
     baseLayer.on('load', onTilesLoaded);
     sstOverlay = new CanvasOverlay(sstCanvas, [[-90, -180], [90, 180]], { zIndex: 1, className: 'leaflet-sst' }).addTo(lmap);
+    for (const c of yearCanvases) new CanvasOverlay(c, [[-90, -180], [90, 180]], { zIndex: 3, className: 'leaflet-year' }).addTo(lmap);  // the steps of the years view (they cross-fade)
     window.addEventListener('online', () => { if (tilesStarted && tilesState === 'off') tryTiles(); });
     window.addEventListener('offline', () => { if (tilesState !== 'off') baseMapFailed(offlineText()); });
   } catch (e) {
@@ -2067,7 +2380,7 @@ function baseMapFailed(text) {
 
 // Tell Leaflet which part of the world to show: the part of the picture on screen (b, in map pixels).
 function syncBaseMap(b) {
-  gibsCredit.hidden = !(tilesState === 'on' || (liveOn && detail));  // GIBS's acknowledgement is shown while GIBS imagery is in use
+  gibsCredit.hidden = !(tilesState === 'on' || (liveOn && detail) || dataView === 'years');  // GIBS's acknowledgement is shown while GIBS imagery is in use
   if (!lmap) return;
   const size = lmap.getSize();
   if (!size.x) return;  // the map is hidden (landing screen)
@@ -2078,11 +2391,12 @@ function syncBaseMap(b) {
   const lon = (b.x + b.w / 2) / MAP_W * 360 - 180, lat = 90 - (b.y + b.h / 2) / MAP_H * 180;
   lmap.setView([lat, lon], zoom, { animate: false });
   if (sstFrame !== frameShown) { sstFrame = frameShown; makeSstOverlay(); }
-  const wantLive = liveOn ? detail : null;
+  const years = dataView === 'years';  // the years view has its own pictures: neither the saved picture nor the live detail is shown
+  const wantLive = liveOn && !years ? detail : null;
   if (wantLive !== lastLive) { lastLive = wantLive; makeLiveOverlay(wantLive); }
   // The saved picture has pixels of about 39 km, so along a coast it colours a strip of land. Where the finer live
   // picture covers the whole view and is already in place, only that one is shown.
-  const hideSaved = !!lastLive && liveInstalled === lastLive && coversView(lastLive, wantedDetail());
+  const hideSaved = years || (!!lastLive && liveInstalled === lastLive && coversView(lastLive, wantedDetail()));
   if (hideSaved !== savedHidden) { savedHidden = hideSaved; sstCanvas.style.opacity = hideSaved ? 0 : 1; }
 }
 

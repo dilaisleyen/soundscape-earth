@@ -11,6 +11,13 @@ What it does, for every entry with "fetch": true:
 If the downloaded picture is not the same as before, "data_date" is set to null: the pictures have no date stamp, so
 the date of the new picture has to be found and written in by hand.
 
+Special entries:
+  - "latest_day": true (the "Today" picture of the Through the years slider): before downloading, the script asks
+    GIBS for the newest day the layer has, puts that day into the url (from "url_template") and into "data_date".
+    The page itself never looks for a newer day: it shows the picture that was downloaded, with the date written here.
+  - "date_known": true (pictures asked for a fixed day): "data_date" stays even if the picture changes.
+  - "kind": "colormap" (an XML file instead of a picture).
+
 Entries with "fetch": false (derived files, such as the time slider frames, which are converted from NASA's EXR
 files) are listed but never touched.
 
@@ -27,6 +34,7 @@ import email.utils
 import hashlib
 import json
 import os
+import re
 import sys
 import tempfile
 import urllib.request
@@ -45,7 +53,7 @@ def destination(entry):
     return path
 
 
-def download(url, path):
+def download(url, path, kind='image/'):
     """Downloads url to path (through a temporary file). Returns (bytes, sha256, last_modified)."""
     request = urllib.request.Request(url, headers={'User-Agent': USER_AGENT})
     folder = os.path.dirname(path)
@@ -55,9 +63,9 @@ def download(url, path):
         digest = hashlib.sha256()
         size = 0
         with urllib.request.urlopen(request, timeout=120) as response, os.fdopen(handle, 'wb') as out:
-            kind = response.headers.get('Content-Type', '')
-            if not kind.startswith('image/'):
-                raise ValueError(f'expected an image, the server sent {kind or "no type"}')
+            kind_header = response.headers.get('Content-Type', '')
+            if not kind_header.startswith(kind):
+                raise ValueError(f'expected {kind}, the server sent {kind_header or "no type"}')
             modified = response.headers.get('Last-Modified')
             while True:
                 chunk = response.read(1 << 16)
@@ -79,6 +87,19 @@ def download(url, path):
         except (TypeError, ValueError):
             pass
     return size, digest.hexdigest(), modified
+
+
+def newest_day(entry):
+    """The newest day GIBS has for the layer of this entry (read from the layer's capabilities)."""
+    url = ('https://gibs.earthdata.nasa.gov/wmts/epsg4326/best/wmts.cgi?SERVICE=WMTS&request=GetCapabilities&layer='
+           + entry['layer'])
+    request = urllib.request.Request(url, headers={'User-Agent': USER_AGENT})
+    with urllib.request.urlopen(request, timeout=120) as response:
+        text = response.read().decode('utf-8', 'replace')
+    found = re.search(r'<Default>(\d{4}-\d{2}-\d{2})</Default>', text)
+    if not found:
+        raise ValueError('could not read the newest day from the capabilities')
+    return found.group(1)
 
 
 def main():
@@ -108,7 +129,12 @@ def main():
             print(f"would download {entry['url']}\n           to {entry['file']}")
             continue
         try:
-            size, sha, modified = download(entry['url'], destination(entry))
+            if entry.get('latest_day'):
+                day = newest_day(entry)
+                entry['url'] = entry['url_template'].replace('{date}', day)
+                entry['data_date'] = day
+                print(f"newest day of {entry['layer']}: {day}")
+            size, sha, modified = download(entry['url'], destination(entry), 'text/xml' if entry.get('kind') == 'colormap' else 'image/')
         except Exception as error:
             failed += 1
             print(f"FAILED  {entry['file']}: {error}")
@@ -116,12 +142,14 @@ def main():
         fetched += 1
         same = sha == entry.get('sha256')
         entry.update({'downloaded': today, 'bytes': size, 'sha256': sha, 'last_modified': modified})
-        if not same:
+        if not same and not entry.get('date_known'):
             changed += 1
             entry['data_date'] = None
             print(f"CHANGED {entry['file']}: not the same picture as before ({size} bytes). "
                   'Its data date is now null: find the date and write it in. If this is the picture that opens '
                   'with the page, the base64 copy inside index.html has to be rebuilt too.')
+        elif not same:
+            print(f"ok      {entry['file']}: downloaded ({size} bytes; its date is fixed, so it stays {entry.get('data_date')})")
         else:
             print(f"ok      {entry['file']}: same picture as before ({size} bytes)")
 
