@@ -51,6 +51,19 @@
   #year-text { flex:0 1 auto; font-size:14px; min-width:0; }
   #year-status { color:var(--muted); font-size:13px; }
   #year-status:empty { display:none; }
+  .r-layers { grid-column:1 / -1; margin-top:8px; display:grid; gap:6px; }
+  .r-layer { display:grid; grid-template-columns:14px 1fr; gap:0 8px; margin:0; font-size:14px; line-height:1.3; }
+  .r-layer i { width:12px; height:12px; border-radius:50%; border:1px solid rgba(255,255,255,.45); grid-row:1 / 3; align-self:start; margin-top:3px; }
+  .r-layer small { grid-column:2; color:var(--gold); font-size:12px; }
+  .r-layer small:empty { display:none; }
+  #layers { padding:8px 14px 10px; background:var(--panel); border:1px solid var(--line); border-radius:14px; }
+  #layers summary { cursor:pointer; font-size:14px; color:var(--muted); }
+  .lyr-row { display:flex; align-items:center; gap:8px; margin-top:6px; font-size:15px; }
+  .lyr-row input { width:18px; height:18px; accent-color:var(--gold); margin:0; cursor:pointer; }
+  .lyr-row label { cursor:pointer; }
+  .lyr-map { margin-left:auto; font-size:13px; color:var(--muted); }
+  .lyr-note { margin:8px 0 0; font-size:12px; color:var(--muted); }
+  #basemap .leaflet-landlayer { opacity:0; transition:opacity 220ms var(--ease-out); }
   #lg-ref { margin:8px 0 0; font-size:12px; line-height:1.35; color:var(--muted); }
   #chart { padding:10px 12px; background:var(--panel); border:1px solid var(--line); border-radius:14px; }
   #chart[hidden] { display:none; }
@@ -189,6 +202,7 @@
     .sub { display:none; }
     #zoombar button { width:40px; height:40px; }
     .tool { font-size:14px; padding:8px 10px; min-height:40px; }  /* the three header buttons fit in one row */
+    .r-layer small, .lyr-note { display:none; }
     #chart-canvas, .chart-title, #lg-ref { display:none; }  /* on a phone the bar under the map stays small: the sentence under the chart carries the same facts, and the “normal” note is in the explanation panel */
     #chart { padding:0; background:none; border:0; border-radius:0; }
     #chart-text { margin:0; font-size:12px; }
@@ -219,7 +233,7 @@
   /* Reduced motion: no drifting or pressing, only short fades */
   @media (prefers-reduced-motion: reduce) {
     :root { --t-in:120ms; --t-out:80ms; }
-    #basemap .leaflet-overlay-pane, #basemap .leaflet-year { transition:none; }
+    #basemap .leaflet-overlay-pane, #basemap .leaflet-year, #basemap .leaflet-landlayer { transition:none; }
     .view.is-leaving, .view.is-entering { transform:none; }
     .tool:active, #w-actions button:active, #zoombar button:active { transform:none; }
   }
@@ -293,7 +307,21 @@
       <div id="r-coords">or press Tab to focus it and use the arrow keys</div>
       <div id="r-theme"></div>
     </div>
+    <div class="r-layers">
+      <p class="r-layer" id="r-human"><i></i><span>Human presence: —</span><small></small></p>
+      <p class="r-layer" id="r-wild"><i></i><span>Wildlife diversity: —</span><small></small></p>
+    </div>
   </section>
+
+  <details id="layers" open>
+    <summary>Sound layers</summary>
+    <div class="lyr-row"><input type="checkbox" id="lyr-ocean" checked aria-keyshortcuts="T"><label for="lyr-ocean" title="Shortcut: T">Ocean temperature</label></div>
+    <div class="lyr-row"><input type="checkbox" id="lyr-human" checked aria-keyshortcuts="P"><label for="lyr-human" title="Shortcut: P (people)">Human presence</label>
+      <input type="checkbox" id="map-human" aria-label="Show Human presence on the map, over land (Data view)"><label for="map-human" class="lyr-map">on map</label></div>
+    <div class="lyr-row"><input type="checkbox" id="lyr-wild" checked aria-keyshortcuts="M"><label for="lyr-wild" title="Shortcut: M (mammals)">Wildlife diversity</label>
+      <input type="checkbox" id="map-wild" aria-label="Show Wildlife diversity on the map, over land (Data view)"><label for="map-wild" class="lyr-map">on map</label></div>
+    <p class="lyr-note">Human presence and wildlife diversity sound over land only.</p>
+  </details>
 
   <section id="legend" aria-hidden="true">
     <div class="lg-title">Anomaly: &deg;C warmer (+) or colder (&minus;) than normal</div>
@@ -331,6 +359,7 @@
   <p>NASA imagery and data used here are provided by NASA and used under <a href="https://www.nasa.gov/nasa-brand-center/images-and-media/" target="_blank" rel="noopener">NASA's Media Usage Guidelines</a>. The pictures in data/nasa/ are copies kept in this project. When you are online, the page also asks NASA's GIBS service for the base map under the temperature picture (Blue Marble, so land shows detail when you zoom in) and for finer, up-to-date pictures of the area on screen (the Live detail button switches the second off); nothing else is requested from NASA's servers. Without the network the page shows the saved picture alone. NASA does not endorse this project.</p>
   <p>The base map is shown with <a href="https://leafletjs.com/" target="_blank" rel="noopener">Leaflet</a> (BSD 2-Clause licence, &copy; Volodymyr Agafonkin), kept in this project in vendor/leaflet/. Leaflet only draws; the values, sounds and spoken texts are read from the saved picture and the live detail, never from the base map.</p>
   <p>The pictures do not update by themselves. In the Latest view, 0&nbsp;&deg;C means &ldquo;same as normal&rdquo;; the source page does not state which reference period &ldquo;normal&rdquo; is based on. In the Through the years view the pictures are GIBS&rsquo;s MUR25 sea surface temperature anomaly (0.25&deg;), 13 November of each year from 2002 to 2025 and &ldquo;Today&rdquo; (the day written in the list of sources, not looked up by the page); there &ldquo;normal&rdquo; is the average for the same calendar day over 2003&ndash;2014 (PO.DAAC, MUR25 v4.2) and the colour scale ends at &plusmn;3&nbsp;&deg;C. Values are read from the colours of the picture, so they are approximate, and the colour scale ends at &plusmn;4&nbsp;&deg;C. The live detail comes in classes of 0.1&nbsp;&deg;C that end at &plusmn;3&nbsp;&deg;C, and it is a different product from the saved picture (GIBS&rsquo;s MUR anomaly instead of the SVS one), so the two typically differ by about 0.3&nbsp;&deg;C.</p>
+  <p>Human presence and Wildlife diversity (two sound layers that sound over land only): <em>Human presence</em> is NASA SEDAC&rsquo;s Gridded Population of the World, Version 4 (GPWv4), Population Density, as served by NASA GIBS: people per square kilometre in 2000, 2005, 2010, 2015 and 2020. The picture nearest to the year on screen is used (the Latest view uses 2020), and GIBS&rsquo;s colour scale ends at 1000 people per km&sup2;, so every denser place counts as 1000. <em>Wildlife diversity</em> is NASA SEDAC&rsquo;s Global Mammal Richness Grids (2015 release), built from IUCN Red List species ranges downloaded in April 2013: it is the number of <strong>mammal species</strong> in a place. It counts mammals only (no birds), comes from a 2013 picture and is the same in every year; it is not a count of animals. Both pictures are reduced by GIBS to 2048 x 1024 (each pixel is one 1-km cell, not an average), so small places can be missed. Both come from the saved copies in data/nasa/, read with GIBS&rsquo;s own colour tables. The full citations are in the list above.</p>
   <p>Country names: Natural Earth (public domain), <em>Admin 0 &ndash; Countries</em>, 1:50m, naturalearthdata.com. They are a label layer only: the sound and the values never use them. The place named for the pointer is approximate: a country is named only when it is clearly the closest one, otherwise the continent is named.</p>
   <p>Earth Jukebox is a prototype made for the NASA International Space Apps Challenge 2026. It is not an official NASA website, and NASA does not endorse this project.</p>
   <button id="about-close" class="tool" type="button" autofocus>Close</button>
@@ -581,6 +610,7 @@ function startAudio() {
   uiBus.connect(uiWet).connect(reverb);
 
   audio = { ac, pan, space, noiseBuf, bodyFilter, bodyGain, highFilter, highGain, lfo, lfoDepth, windGain, ambientBus, uiBus, lastHit: 0 };
+  Object.assign(audio, buildLayerAudio(ac, pan, master, reverb, noiseBuf));  // human presence and wildlife diversity (see "Sound layers")
   scheduleSprout();
 }
 
@@ -661,11 +691,12 @@ function noise(type, freq) {
 const LAND_SOUND = { freq: 150, decay: 0.09 };  // Hz and seconds (also quoted by the explanation panel)
 const ICE_SOUND = { decay: 2.4, overtone: 2.76, twin: 1.004 };  // seconds, and note ratios (also quoted by the panel)
 function hitLand() {
+  const k = landKnockFactor();  // far in the background while a land layer (human / wildlife) is on
   const f = LAND_SOUND.freq * (0.92 + 0.16 * Math.random());  // each step slightly different
-  blip(tone(f), 0.5, LAND_SOUND.decay, [audio.pan]);          // dull body
-  blip(tone(f * 2.7), 0.12, 0.04, [audio.pan]);   // woody overtone
+  blip(tone(f), 0.5 * k, LAND_SOUND.decay, [audio.pan]);          // dull body
+  blip(tone(f * 2.7), 0.12 * k, 0.04, [audio.pan]);   // woody overtone
   const [grit, gritFilter] = noise('lowpass', 1500);
-  blip(grit, 0.25, 0.035, [audio.pan], gritFilter);  // rough surface
+  blip(grit, 0.25 * k, 0.035, [audio.pan], gritFilter);  // rough surface
 }
 
 // Ice: one lonely, cold glass note far away in an empty space.
@@ -758,10 +789,10 @@ function uiSound(kind) {
 }
 
 // result = null fades everything out (pointer left the map)
-function updateSound(result, lon) {
+function updateSound(result, lon, layers) {
   if (!audio) return;
   const a = audio, t = a.ac.currentTime;
-  const s = result ? soundFor(result) : SILENT;
+  const s = result && layerOn.ocean ? soundFor(result) : SILENT;  // the ocean temperature layer can be switched off
   const glide = (param, value) => param.setTargetAtTime(value, t, SMOOTH);
   glide(a.bodyGain.gain, s.body);
   glide(a.bodyFilter.frequency, s.bodyCutoff);
@@ -770,6 +801,7 @@ function updateSound(result, lon) {
   glide(a.lfo.frequency, s.shimmerRate);
   glide(a.lfoDepth.gain, s.shimmerDepth);
   glide(a.windGain.gain, s.wind);
+  applyLayerSound(result && result.type === 'land' ? layers : null);  // the land layers sound over land only
   if (!result) return;
   glide(a.pan.pan, lon / 180);  // longitude -> left/right
 
@@ -1014,7 +1046,8 @@ function probe(x, y, announceIt, quiet) {  // quiet: update the readout only, wi
     const live = detailAt(lon, lat);  // the finer live picture, where there is one with data
     if (live) { result = { type: 'ocean', value: live.value }; [r, g, b] = live.color; }
   }
-  if (!quiet) updateSound(result, lon);
+  const layers = layerReadings(lon, lat, result);  // human presence and wildlife diversity, over land
+  if (!quiet) updateSound(result, lon, layers);
 
   const place = placeName(result.type, lat, lon);
   rPlace.textContent = place;
@@ -1032,11 +1065,12 @@ function probe(x, y, announceIt, quiet) {  // quiet: update the readout only, wi
   placeMarker();
   placeTip();
 
-  lastProbe = { result, place, lat, lon };
+  lastProbe = { result, place, lat, lon, layers };
+  showLayerRows(lastProbe);
   scheduleWhy();
 
   // Only keyboard moves are announced: mouse users see the text, and announcing every pixel would flood a listener.
-  if (announceIt) announce(describe(result, place));
+  if (announceIt) announce(describe(result, place) + layerWords(lastProbe));
 }
 
 // ---- Pointer: hover to hear, drag to move the map, wheel or pinch to zoom ----
@@ -1079,13 +1113,13 @@ function lockAt(clientX, clientY) {
   clearInterval(lockTimer);
   lockTimer = setInterval(repeatLocked, 200);
   render();
-  announce(`Sound locked here. ${describe(lastProbe.result, lastProbe.place)}. Right-click to release.`);
+  announce(`Sound locked here. ${describe(lastProbe.result, lastProbe.place)}${layerWords(lastProbe)}. Right-click to release.`);
 }
 function repeatLocked() {  // ocean sound is continuous; land and ice are single sounds, so they are played again
   if (!lock || !lastProbe || lastProbe.result.type === 'ocean') return;
   if (performance.now() - lockRepeatAt < LOCK_REPEAT[lastProbe.result.type]) return;
   lockRepeatAt = performance.now();
-  updateSound(lastProbe.result, lastProbe.lon);
+  updateSound(lastProbe.result, lastProbe.lon, lastProbe.layers);
 }
 function releaseLock(announceIt, clientX, clientY) {  // clientX, clientY: where the pointer is, so the sound can follow it at once
   if (!lock) return false;
@@ -1277,7 +1311,7 @@ const GUIDE = "Earth Jukebox turns NASA's sea surface temperature map into sound
   'Press W to hear where you are, R to repeat, H for help, and Space to stop or start the sound.';
 const HELP = 'Arrow keys move over the map. Hold Shift to move faster. W says where you are. ' +
   'Plus and minus zoom in and out, and zero shows the whole map. G turns the grid on or off. ' +
-  'Click the map with the mouse to lock the sound on that spot, and right-click to release it. L turns the country names on or off. V switches between Earth view and Data view. C reads the line chart of the spot through the years. U turns the interface sounds on or off. E says why the current place sounds the way it does, and D gives the details. ' +
+  'Click the map with the mouse to lock the sound on that spot, and right-click to release it. L turns the country names on or off. V switches between Earth view and Data view. C reads the line chart of the spot through the years. T, P and M switch the sound layers ocean temperature, human presence and wildlife diversity on and off; the last two sound over land only. U turns the interface sounds on or off. E says why the current place sounds the way it does, and D gives the details. ' +
   'R repeats the last message. Space starts or stops the sound. ' +
   'Under the map you can choose the latest picture or the years; in the years, Tab to the year slider, then use the left and right arrow keys, Home for 2002 and End for today. ' +
   'Control, Alt and B reopen the accessibility options.';
@@ -1285,7 +1319,7 @@ const HELP = 'Arrow keys move over the map. Hold Shift to move faster. W says wh
 function whereAmI() {
   if (!lastProbe) { announce('No position yet. Use the arrow keys to move onto the map.'); return; }
   const { result, place, lat, lon } = lastProbe;
-  announce(`${describe(result, place)}. Latitude ${Math.abs(lat).toFixed(0)} degrees ${lat >= 0 ? 'north' : 'south'}, ` +
+  announce(`${describe(result, place)}${layerWords(lastProbe)}. Latitude ${Math.abs(lat).toFixed(0)} degrees ${lat >= 0 ? 'north' : 'south'}, ` +
            `longitude ${Math.abs(lon).toFixed(0)} degrees ${lon >= 0 ? 'east' : 'west'}.`);
 }
 
@@ -1629,11 +1663,12 @@ function showYear(i, f) {
   yearFront = back;
   yearShown = i;
   yearData = f;
+  syncHumanYear();  // the GPW picture nearest to this year
   render();
   scheduleChart();
   // read the same spot again, in this step. The sound follows only if the pointer or keyboard is on the map.
   if (lastProbe) probe(cursor.x, cursor.y, false, !(tipOn || markerOn || lock));
-  const text = lastProbe ? `${stepSpoken(i)}. ${describe(lastProbe.result, lastProbe.place)}` : stepSpoken(i);
+  const text = lastProbe ? `${stepSpoken(i)}. ${describe(lastProbe.result, lastProbe.place)}${layerWords(lastProbe)}` : stepSpoken(i);
   yearSlider.setAttribute('aria-valuetext', text);  // a screen reader reads this value text
   if (mode === 'voice') speak(text);
 }
@@ -1717,6 +1752,7 @@ async function setDataView(v) {
     dataView = 'latest';
     prefetchToken++;
     yearData = null;
+    syncHumanYear();
     yearCanvases[0].style.opacity = '0'; yearCanvases[1].style.opacity = '0';
     yearStatus.textContent = '';
     applyDataView();
@@ -1966,7 +2002,9 @@ function explain(lp) {
     rows.push(['Pitch', `One low note, about ${LAND_SOUND.freq} Hz, a little different every time, like steps on wood or stone.`]);
     rows.push(['Timbre', 'A dull body, a woody overtone and a short burst of rough noise.']);
     rows.push(['Rhythm', `One knock for each move over land, at most one every ${HIT_GAP.land} seconds. Each lasts about ${LAND_SOUND.decay} seconds.`]);
-    rows.push(['Loudness', 'Fixed: land has no value to scale it.']);
+    rows.push(['Loudness', layerOn.human || layerOn.wild ? `Fixed, and kept far behind the land layers (${Math.round(LAND_KNOCK_BEHIND * 100)}% of its usual loudness).` : 'Fixed: land has no value to scale it.']);
+    for (const r of layerRows(lp)) rows.push(r);
+    short = short.slice(0, -1) + layerWords(lp) + '.';
   } else {
     const lo = Math.round(Math.min(...ICE_NOTES)), hi = Math.round(Math.max(...ICE_NOTES));
     head = `Ice / no data → ${theme}`;
@@ -2178,6 +2216,8 @@ function renderSources(doc) {
     if (c.technical_support) people.push(`Technical support: ${c.technical_support.join(', ')}.`);
     if (f.underlying_data) people.push(`Data: ${f.underlying_data}.`);
     credit.append(people.join(' '));
+    const cite = f.citation ? document.createElement('p') : null;
+    if (cite) cite.textContent = `Please cite: ${f.citation}`;
 
     const dates = files.map((x) => x.data_date).filter(Boolean).sort();
     const got = [...new Set(files.map((x) => x.downloaded).filter(Boolean))].sort();
@@ -2187,7 +2227,7 @@ function renderSources(doc) {
       (dates.length ? `, data dates ${niceDate(dates[0])} to ${niceDate(dates[dates.length - 1])}` : '') +
       (got.length ? `, downloaded ${got.map(niceDate).join(' and ')}` : '') + '. ' +
       (derived.length ? `${derived.length} of them are derived: ${derived[0].processing}` : '');
-    blocks.push(credit, what);
+    blocks.push(credit, ...(cite ? [cite] : []), what);
   }
   const acknowledged = new Set();  // GIBS's thank-you sentence is shown once, however many of its layers are used
   for (const s of doc.live_sources || []) {  // services the page asks while it is used
@@ -2253,10 +2293,416 @@ document.addEventListener('keydown', (e) => {
   else if (k === 'u') toggleUiSounds();
   else if (k === 'l') toggleLabels();
   else if (k === 'v') toggleView();
+  else if (k === 't') toggleLayer('ocean');
+  else if (k === 'p') toggleLayer('human');
+  else if (k === 'm') toggleLayer('wild');
   else if (k === 'c') announce(dataView === 'years' ? chartSummary(chartValues()) : 'The chart belongs to the Through the years view. Choose it under the map first.');
   else if (k === 'e') explainShort();
   else if (k === 'd') explainDetail();
 });
+
+// Colour tables, from GIBS's colormap files in data/nasa/gpw/ and data/nasa/mammals/ (checked against them by a script):
+// [red, green, blue, from, to] in persons per km2 (to = null: and more); class number = position + 1
+const GPW_CLASSES = [[255,242,209,0.0,1.0],[255,239,203,1.0,1.5],[255,236,198,1.5,2.0],[255,233,192,2.0,2.5],[255,230,187,2.5,3.0],[255,227,182,3.0,3.5],[255,224,176,3.5,4.0],[255,221,171,4.0,4.5],[255,218,166,4.5,5.0],[254,213,154,5.0,7.5],[253,208,142,7.5,10.0],[252,203,131,10.0,12.5],[252,198,119,12.5,15.0],[251,193,108,15.0,17.5],[250,188,96,17.5,20.0],[250,184,85,20.0,22.5],[250,177,81,22.5,25.0],[250,171,77,25.0,50.0],[251,165,74,50.0,75.0],[251,159,70,75.0,100.0],[252,153,67,100.0,125.0],[252,147,63,125.0,150.0],[253,141,60,150.0,175.0],[251,129,56,175.0,200.0],[249,117,52,200.0,225.0],[247,105,48,225.0,250.0],[245,94,44,250.0,325.0],[243,82,40,325.0,400.0],[241,70,36,400.0,475.0],[240,59,32,475.0,550.0],[232,50,32,550.0,625.0],[225,42,33,625.0,700.0],[218,33,34,700.0,775.0],[210,25,35,775.0,850.0],[203,16,36,850.0,925.0],[196,8,37,925.0,1000.0],[189,0,38,1000.0,null]];
+// [red, green, blue]; the class of position k is k + 1 species
+const MAMMAL_CLASSES = [[179,255,179],[178,254,178],[177,253,177],[176,253,176],[175,252,175],[174,251,174],[173,251,173],[172,250,173],[172,250,172],[171,249,171],[170,248,170],[169,248,169],[168,247,168],[167,246,167],[166,246,166],[165,245,166],[165,245,165],[164,244,164],[163,243,163],[162,243,162],[161,242,161],[160,242,160],[159,241,160],[159,240,159],[158,240,158],[157,239,157],[156,238,156],[155,238,155],[154,237,154],[153,237,153],[152,236,153],[152,235,152],[151,235,151],[150,234,150],[149,234,149],[148,233,148],[147,232,147],[146,232,147],[146,231,146],[145,230,145],[144,230,144],[143,229,143],[142,229,142],[141,228,141],[140,227,140],[139,227,140],[139,226,139],[138,225,138],[137,225,137],[136,224,136],[135,224,135],[134,223,134],[133,222,134],[133,222,133],[132,221,132],[131,221,131],[130,220,130],[129,219,129],[128,219,128],[127,218,127],[126,217,127],[126,217,126],[125,216,125],[124,216,124],[123,215,123],[122,214,122],[121,214,121],[120,213,121],[120,213,120],[119,212,119],[118,211,118],[117,211,117],[116,210,116],[115,209,115],[114,209,114],[113,208,113],[112,207,113],[112,207,112],[111,206,111],[110,206,110],[109,205,109],[108,204,108],[107,204,107],[106,203,106],[105,202,106],[105,202,105],[104,201,104],[103,200,103],[102,200,102],[101,199,101],[100,199,100],[99,198,99],[98,197,98],[97,197,98],[97,196,97],[96,195,96],[95,195,95],[94,194,94],[93,194,93],[92,193,92],[91,192,91],[90,192,91],[90,191,90],[89,190,89],[88,190,88],[87,189,87],[86,188,86],[85,188,85],[84,187,84],[83,187,83],[82,186,83],[82,185,82],[81,185,81],[80,184,80],[79,183,79],[78,183,78],[77,182,77],[76,182,76],[75,181,76],[75,180,75],[74,180,74],[73,179,73],[72,178,72],[71,178,71],[70,177,70],[69,176,69],[68,176,68],[67,175,68],[67,175,67],[66,174,66],[65,173,65],[64,173,64],[63,172,63],[62,171,62],[61,171,61],[60,170,61],[60,170,60],[59,169,59],[58,168,58],[57,168,57],[56,167,56],[55,166,55],[54,166,54],[53,165,53],[52,164,52],[51,164,51],[50,163,51],[50,163,50],[49,162,49],[48,161,48],[47,161,47],[46,160,46],[45,159,45],[44,159,44],[43,158,43],[42,157,42],[41,157,41],[40,156,41],[40,156,40],[39,155,39],[38,154,38],[37,154,37],[36,153,36],[35,152,35],[34,152,34],[33,151,33],[32,150,32],[31,150,31],[30,149,31],[30,149,30],[29,148,29],[28,147,28],[27,147,27],[26,146,26],[25,145,25],[24,145,24],[23,144,23],[22,143,22],[21,143,21],[20,142,21],[20,142,20],[19,141,19],[18,140,18],[17,140,17],[16,139,16],[15,138,15],[14,138,14],[13,137,13],[12,136,12],[11,136,11],[10,135,11],[10,135,10],[9,134,9],[8,133,8],[7,133,7],[6,132,6],[5,131,5],[4,131,4],[3,130,3],[2,129,2],[1,129,1],[0,128,1],[0,128,0]];
+
+// ---- Sound layers on land: human presence and wildlife diversity ----
+// Three sound layers can be switched on and off one by one: "Ocean temperature" (the sound the page always had),
+// "Human presence" and "Wildlife diversity". The two new ones only sound over land; over the sea only the ocean
+// temperature sounds. They change nothing on the map unless "on map" is ticked (Data view only).
+// Human presence: NASA SEDAC's Gridded Population of the World (GPWv4.11), people per km2, as GIBS shows it (GPW_CLASSES,
+//   the colour table of GIBS, 37 classes). The picture of the GPW year nearest to the year on screen is used (2000, 2005,
+//   2010, 2015 or 2020; the Latest view uses 2020). Theme: "chaotic".
+// Wildlife diversity: NASA SEDAC's Global Mammal Richness Grids (2015 release, IUCN data of April 2013), the number of
+//   mammal species in each cell (MAMMAL_CLASSES, one class for every number of species). Mammals only, no birds, and the
+//   same in every year. Theme: "alive & peaceful".
+// Like the other pictures these are read from the saved copies in data/nasa/ with GIBS's colour tables, never from the
+// map on screen. Both are loaded a moment after the page has opened.
+const GPW_KEY = new Map(GPW_CLASSES.map((c, i) => [detailKey(c), i + 1]));
+const MAMMAL_KEY = new Map(MAMMAL_CLASSES.map((c, i) => [detailKey(c), i + 1]));
+const GPW_YEARS = [2000, 2005, 2010, 2015, 2020];
+const HUMAN_THEME = 'chaotic', WILD_THEME = 'alive & peaceful';
+const layerOn = { ocean: true, human: true, wild: true };   // the three sound layers (all on at the start)
+const layerShow = { human: false, wild: false };            // "on map": show a layer's picture over the land (Data view)
+const LAYER_NAMES = { ocean: 'Ocean temperature', human: 'Human presence', wild: 'Wildlife diversity' };
+const LAND_KNOCK_BEHIND = 0.3;  // the dull land knock is this much of its old loudness while a land layer is on
+const gpwPics = new Map();      // GPW year -> { cls, w, h }
+let humanPic = null, humanYear = null, humanYearWanted = 2020, wildPic = null;
+let humanNow = null, wildNow = null;  // what the two layers sound like right now (see applyLayerSound)
+
+function gpwYearFor(step) {  // the GPW year nearest to the year of a step of the years view
+  if (YEARS[step].today) return 2020;
+  const y = YEARS[step].year;
+  return GPW_YEARS.reduce((best, g) => (Math.abs(g - y) < Math.abs(best - y) ? g : best), GPW_YEARS[0]);
+}
+function currentGpwYear() { return dataView === 'years' && yearShown >= 0 ? gpwYearFor(yearShown) : 2020; }
+
+// ---- Loading the two pictures ----
+async function loadClasses(url, keyMap) {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const picture = await createImageBitmap(await response.blob());
+  const w = picture.width, h = picture.height, c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const g = c.getContext('2d', { willReadFrequently: true });
+  g.drawImage(picture, 0, 0);
+  const src = new Uint32Array(g.getImageData(0, 0, w, h).data.buffer);
+  const cls = new Uint8Array(w * h);
+  for (let k = 0; k < src.length; k++) {
+    const px = src[k];
+    if ((px >>> 24) < 128) continue;  // see-through: no data, or under 1 person per km2
+    cls[k] = keyMap.get(px & 0xffffff) || 0;
+  }
+  return { cls, w, h };
+}
+async function ensureHuman(year) {
+  humanYearWanted = year;
+  if (humanYear === year && humanPic) return;
+  try {
+    if (!gpwPics.has(year)) gpwPics.set(year, await loadClasses(`data/nasa/gpw/GPW_Population_Density_${year}.png`, GPW_KEY));
+  } catch (e) { return; }  // the layer simply stays as it was
+  if (humanYearWanted !== year) return;  // the view moved on meanwhile
+  humanPic = gpwPics.get(year);
+  humanYear = year;
+  layersChanged();
+}
+async function ensureWild() {
+  if (wildPic) return;
+  try { wildPic = await loadClasses('data/nasa/mammals/Mammal_Richness_Grids_All_Species_2013.png', MAMMAL_KEY); } catch (e) { return; }
+  layersChanged();
+}
+function loadLayerPictures() {
+  if (!yearsUsable) return;  // opened as a file: the browser would not let the page read these pictures
+  if (layerOn.human || layerShow.human) ensureHuman(currentGpwYear());
+  if (layerOn.wild || layerShow.wild) ensureWild();
+}
+function syncHumanYear() {  // the year on screen changed: the nearest GPW year follows
+  if (!yearsUsable) return;
+  const want = currentGpwYear();
+  if (want !== humanYearWanted || !humanPic) ensureHuman(want);
+}
+function layersChanged() {  // a picture arrived or changed: read the same spot again, and repaint the map pictures
+  paintLayerOverlays();
+  if (lastProbe) probe(cursor.x, cursor.y, false, !(tipOn || markerOn || lock));
+  if (dataView === 'years' && yearShown >= 0) {  // the words a screen reader reads for the slider follow the new picture
+    yearSlider.setAttribute('aria-valuetext', lastProbe ? `${stepSpoken(yearShown)}. ${describe(lastProbe.result, lastProbe.place)}${layerWords(lastProbe)}` : stepSpoken(yearShown));
+  }
+}
+
+// ---- Reading ----
+function classAt(pic, lon, lat) {
+  if (!pic) return 0;
+  const col = Math.min(pic.w - 1, Math.max(0, Math.floor((lon + 180) / 360 * pic.w)));
+  const row = Math.min(pic.h - 1, Math.max(0, Math.floor((90 - lat) / 180 * pic.h)));
+  return pic.cls[row * pic.w + col];
+}
+const trim = (v) => (Number.isInteger(v) ? String(v) : String(v));
+function humanReading(lon, lat) {  // null while the picture is not loaded
+  if (!humanPic) return null;
+  const c = classAt(humanPic, lon, lat);
+  if (!c) return { c: 0, density: 0, label: 'under 1', color: null };  // see-through: under 1 person per km2 (or water)
+  const [r, g, b, lo, hi] = GPW_CLASSES[c - 1];
+  return { c, density: hi === null ? lo : Math.sqrt(Math.max(lo, 0.5) * hi), label: hi === null ? `${trim(lo)}+` : `${trim(lo)}–${trim(hi)}`, color: [r, g, b] };
+}
+function wildReading(lon, lat) {
+  if (!wildPic) return null;
+  const c = classAt(wildPic, lon, lat);
+  if (!c) return { n: 0, color: null };
+  return { n: c, color: MAMMAL_CLASSES[c - 1] };
+}
+function layerReadings(lon, lat, result) {  // only over land; null over the sea, ice and places without data
+  if (result.type !== 'land') return null;
+  return { human: humanReading(lon, lat), wild: wildReading(lon, lat), gpwYear: humanYear };
+}
+
+// ---- What the two layers sound like (pure functions: the sound and the explanation panel both use them) ----
+const clamp01 = (v) => Math.max(0, Math.min(1, v));
+// Human presence: people per km2 on a logarithmic scale (1 -> 0, 10 -> 1/3, 100 -> 2/3, 1000 and more -> 1). Everything that
+// makes the sound busy grows with that one number: crowd murmur, traffic rumble, horns and clatter.
+function humanSound(D) {
+  const h = clamp01(Math.log10(Math.max(D, 1)) / 3);
+  return {
+    h,
+    rumble: 0.045 * h ** 1.2,               // traffic rumble level
+    babble: 0.06 * h ** 1.1,                // crowd murmur level
+    babbleCutoff: 700 + 1800 * h,           // murmur centre (Hz): brighter and more frantic
+    jitter: 0.25 + 0.75 * h,                // how often the murmur changes at random (share of the 10 steps a second)
+    hornRate: 7 * h ** 3,                   // horns per second
+    clatterRate: 5 * h ** 2,                // clatter per second
+    eventLevel: 0.02 + 0.05 * h,            // how loud horns and clatter are
+  };
+}
+const HUMAN_OFF = humanSound(0);
+// Wildlife diversity: mammal species, on a logarithmic scale (1 -> 0.13, 10 -> 0.45, 50 -> 0.74, 200 -> 1). Calm with few
+// species, lively with many: more and more chirps, a warmer pad, a fuller air. Always consonant (A major pentatonic).
+function wildSound(n) {
+  const w = n > 0 ? clamp01(Math.log(1 + n) / Math.log(201)) : 0;
+  return {
+    w,
+    pad: n > 0 ? 0.004 + 0.06 * w * w : 0,   // warm, slow pad level
+    air: 0.012 * w * w,                       // fine, high "air" of many small voices
+    chirpRate: n > 0 ? 0.12 + 6 * w ** 1.6 : 0,   // chirps per second
+    chirpLevel: 0.01 + 0.025 * w,
+    trill: 0.4 * w,                           // chance that a chirp becomes a short run of two or three notes
+  };
+}
+const WILD_OFF = wildSound(0);
+const WILD_NOTES = [880, 987.77, 1108.73, 1318.51, 1479.98, 1760, 1975.53, 2217.46, 2637.02];  // A major pentatonic, A5 to E7
+
+// ---- The sound engine of the two layers ----
+function buildLayerAudio(ac, pan, master, reverb, noiseBuf) {
+  const loop = (filterType, freq, q) => {  // a looping noise source through one filter
+    const src = ac.createBufferSource();
+    src.buffer = noiseBuf; src.loop = true;
+    const f = ac.createBiquadFilter();
+    f.type = filterType; f.frequency.value = freq; f.Q.value = q;
+    src.connect(f);
+    src.start(0, Math.random() * 1.5);
+    return f;
+  };
+  // Human presence goes through the same left/right panner as the ocean chord (longitude).
+  const humanBus = ac.createGain();
+  humanBus.connect(pan);
+  const rumbleGain = ac.createGain(); rumbleGain.gain.value = 0;
+  loop('lowpass', 140, 0.7).connect(rumbleGain).connect(humanBus);
+  const babbleGain = ac.createGain(); babbleGain.gain.value = 0;
+  babbleGain.connect(humanBus);
+  const babbleA = loop('bandpass', 900, 1.1), babbleB = loop('bandpass', 1700, 2.5);
+  const ampA = ac.createGain(), ampB = ac.createGain();
+  ampA.gain.value = 0.5; ampB.gain.value = 0.5;
+  babbleA.connect(ampA).connect(babbleGain);
+  babbleB.connect(ampB).connect(babbleGain);
+  // Wildlife goes straight to the output with a lot of reverb, like the ambient bed: wide and peaceful.
+  const wildBus = ac.createGain();
+  wildBus.connect(master);
+  const wildWet = ac.createGain(); wildWet.gain.value = 0.7;
+  wildBus.connect(wildWet).connect(reverb);
+  const padGain = ac.createGain(); padGain.gain.value = 0;
+  const padBreath = ac.createGain(); padBreath.gain.value = 0.7;
+  padBreath.connect(padGain).connect(wildBus);
+  const padVoices = ac.createGain(); padVoices.gain.value = 0.17;  // six voices add up: this keeps the chord soft
+  padVoices.connect(padBreath);
+  for (const f of [220, 329.63, 440]) for (const cents of [-5, 5]) {  // A3 E4 A4: an open, warm chord
+    const osc = ac.createOscillator();
+    osc.frequency.value = f; osc.detune.value = cents;
+    osc.connect(padVoices);
+    osc.start();
+  }
+  const breathLfo = ac.createOscillator(); breathLfo.frequency.value = 0.11;
+  const breathDepth = ac.createGain(); breathDepth.gain.value = 0.3;
+  breathLfo.connect(breathDepth).connect(padBreath.gain);
+  breathLfo.start();
+  const airGain = ac.createGain(); airGain.gain.value = 0;
+  const airAmp = ac.createGain(); airAmp.gain.value = 0.6;
+  loop('bandpass', 5200, 2.2).connect(airAmp).connect(airGain).connect(wildBus);
+  return { humanBus, rumbleGain, babbleGain, babbleA, babbleB, ampA, ampB, wildBus, padGain, airGain, airAmp };
+}
+
+function applyLayerSound(layers) {  // called with every update of the sound; layers = what is under the pointer (or null)
+  const a = audio;
+  if (!a || !a.humanBus) return;
+  const t = a.ac.currentTime, glide = (param, v) => param.setTargetAtTime(v, t, 0.12);
+  const hs = layers && layers.human && layerOn.human ? humanSound(layers.human.density) : HUMAN_OFF;
+  const ws = layers && layers.wild && layerOn.wild ? wildSound(layers.wild.n) : WILD_OFF;
+  humanNow = hs.h > 0 ? hs : null;
+  wildNow = ws.chirpRate > 0 ? ws : null;
+  glide(a.rumbleGain.gain, hs.rumble);
+  glide(a.babbleGain.gain, hs.babble);
+  glide(a.babbleA.frequency, hs.babbleCutoff * 0.6 + 100);
+  glide(a.babbleB.frequency, hs.babbleCutoff * 1.4);
+  glide(a.padGain.gain, ws.pad);
+  glide(a.airGain.gain, ws.air);
+}
+function landKnockFactor() { return layerOn.human || layerOn.wild ? LAND_KNOCK_BEHIND : 1; }
+
+// Ten times a second the human layer shakes its murmur at random and may throw in a horn or a clatter; the wildlife
+// layer may sing. How often and how loud all of it is comes from the values above.
+function poisson(rate) {  // how many events fall in this tenth of a second (rate per second)
+  let n = 0, p = rate * 0.1;
+  while (p > 0) { if (Math.random() < Math.min(p, 1)) n++; p -= 1; }
+  return n;
+}
+function humanHorn(hs) {
+  const { ac, humanBus } = audio, t = ac.currentTime;
+  const f = 300 * 2 ** (Math.random() * 1.8);  // 300 to 1000 Hz, not on any scale: this is traffic, not music
+  const len = 0.09 + Math.random() * 0.18;
+  const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2200;
+  const g = ac.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(hs.eventLevel, t + 0.012);
+  g.gain.setValueAtTime(hs.eventLevel, t + len * 0.7);
+  g.gain.exponentialRampToValueAtTime(0.0005, t + len);
+  const p = ac.createStereoPanner(); p.pan.value = Math.random() * 1.4 - 0.7;
+  lp.connect(g).connect(p).connect(humanBus);
+  for (const ratio of [1, 1.06]) {  // two notes a little apart: rough, like a horn
+    const osc = ac.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.value = f * ratio;
+    osc.connect(lp);
+    osc.start(t);
+    osc.stop(t + len + 0.02);
+  }
+}
+function humanClatter(hs) {
+  const [src, filter] = noise('bandpass', 1500 + Math.random() * 3000);
+  filter.Q.value = 1.5;
+  blip(src, hs.eventLevel * 0.9, 0.03 + Math.random() * 0.04, [audio.humanBus], filter);
+}
+function wildChirp(ws) {
+  const { ac, wildBus } = audio, t0 = ac.currentTime;
+  const top = 3 + Math.round(6 * ws.w);  // richer places use the higher notes too
+  let idx = Math.floor(Math.random() * Math.min(top, WILD_NOTES.length));
+  const count = Math.random() < ws.trill ? 2 + (Math.random() < 0.4 ? 1 : 0) : 1;
+  const p = ac.createStereoPanner(); p.pan.value = Math.random() * 1.6 - 0.8;
+  p.connect(wildBus);
+  for (let k = 0; k < count; k++) {
+    const t = t0 + k * 0.09, f = WILD_NOTES[Math.max(0, Math.min(WILD_NOTES.length - 1, idx))], len = 0.09 + Math.random() * 0.12;
+    const osc = ac.createOscillator(), g = ac.createGain();
+    osc.frequency.setValueAtTime(f * 0.97, t);
+    osc.frequency.exponentialRampToValueAtTime(f * 1.02, t + len * 0.6);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(ws.chirpLevel, t + 0.015);  // soft attack: never sharp
+    g.gain.exponentialRampToValueAtTime(0.0005, t + len);
+    osc.connect(g).connect(p);
+    osc.start(t);
+    osc.stop(t + len + 0.02);
+    idx += Math.random() < 0.5 ? 1 : -1;  // the next note of a run is a neighbour on the scale
+  }
+}
+function layerTick() {
+  const a = audio;
+  if (!a || !a.humanBus || a.ac.state !== 'running') return;
+  const t = a.ac.currentTime;
+  if (humanNow) {
+    const hs = humanNow;
+    if (Math.random() < hs.jitter) {  // the murmur never settles
+      a.ampA.gain.setTargetAtTime(0.1 + Math.random() * 0.9, t, 0.04);
+      a.ampB.gain.setTargetAtTime(0.1 + Math.random() * 0.9, t, 0.04);
+    }
+    for (let k = poisson(hs.hornRate); k > 0; k--) humanHorn(hs);
+    for (let k = poisson(hs.clatterRate); k > 0; k--) humanClatter(hs);
+  }
+  if (wildNow) {
+    for (let k = poisson(wildNow.chirpRate); k > 0; k--) wildChirp(wildNow);
+    a.airAmp.gain.setTargetAtTime(0.3 + Math.random() * 0.7, t, 0.5);  // the air swells and thins slowly
+  }
+}
+setInterval(layerTick, 100);
+
+// ---- The three switches ----
+const lyrBoxes = { ocean: document.getElementById('lyr-ocean'), human: document.getElementById('lyr-human'), wild: document.getElementById('lyr-wild') };
+const mapBoxes = { human: document.getElementById('map-human'), wild: document.getElementById('map-wild') };
+function refreshSound() {  // after a switch: the sound under the pointer follows at once
+  if (lastProbe && (tipOn || markerOn || lock)) updateSound(lastProbe.result, lastProbe.lon, lastProbe.layers);
+  else if (!lastProbe) applyLayerSound(null);
+  showLayerRows(lastProbe);
+  renderWhy();
+}
+function setLayer(name, on, announceIt) {
+  layerOn[name] = on;
+  lyrBoxes[name].checked = on;
+  if (on) { if (name === 'human') ensureHuman(currentGpwYear()); if (name === 'wild') ensureWild(); }
+  refreshSound();
+  if (announceIt) announce(`${LAYER_NAMES[name]} sound ${on ? 'on' : 'off'}.` + (name !== 'ocean' && on ? ' It sounds over land only.' : ''));
+}
+for (const name of Object.keys(lyrBoxes)) lyrBoxes[name].addEventListener('change', () => setLayer(name, lyrBoxes[name].checked, true));
+function toggleLayer(name) { setLayer(name, !layerOn[name], true); }
+function setLayerShow(name, on) {
+  layerShow[name] = on;
+  mapBoxes[name].checked = on;
+  if (on) { if (name === 'human') ensureHuman(currentGpwYear()); else ensureWild(); }
+  paintLayerOverlays();
+  applyView();
+  announce(on ? `${LAYER_NAMES[name]} shown on the map in the Data view, over land.` : `${LAYER_NAMES[name]} hidden from the map.`);
+}
+for (const name of Object.keys(mapBoxes)) mapBoxes[name].addEventListener('change', () => setLayerShow(name, mapBoxes[name].checked));
+
+// ---- The right panel rows ----
+const rowEls = { human: document.getElementById('r-human'), wild: document.getElementById('r-wild') };
+function setRow(el, chip, main, note) {
+  const parts = el.children;  // chip, text, note
+  parts[0].style.background = chip ? `rgb(${chip[0]},${chip[1]},${chip[2]})` : 'transparent';
+  parts[1].textContent = main;
+  parts[2].textContent = note;
+}
+function humanText(r) { return r ? (r.c ? `${r.label} people/km²` : 'under 1 person/km²') : 'loading…'; }
+function wildText(r) { return r ? (r.n ? `${r.n} mammal species` : 'no data') : 'loading…'; }
+function humanNote() {
+  const want = currentGpwYear(), asked = dataView === 'years' && yearShown >= 0 ? YEARS[yearShown] : null;
+  return `${HUMAN_THEME} · GPW ${humanYear || want}` + (asked && !asked.today && asked.year !== (humanYear || want) ? ` (nearest to ${asked.year})` : '');
+}
+const WILD_NOTE = `${WILD_THEME} · 2013 data, the same in every year`;
+function showLayerRows(lp) {
+  const land = lp && lp.result.type === 'land', lay = lp && lp.layers;
+  const off = (name) => !layerOn[name];
+  if (!lp) { setRow(rowEls.human, null, 'Human presence: —', ''); setRow(rowEls.wild, null, 'Wildlife diversity: —', ''); return; }
+  setRow(rowEls.human, land && lay && lay.human ? lay.human.color : null,
+    `Human presence: ${!land ? '— (over land only)' : off('human') ? 'sound off' : humanText(lay && lay.human)}`, land && !off('human') ? humanNote() : '');
+  setRow(rowEls.wild, land && lay && lay.wild ? lay.wild.color : null,
+    `Wildlife diversity: ${!land ? '— (over land only)' : off('wild') ? 'sound off' : wildText(lay && lay.wild)}`, land && !off('wild') ? WILD_NOTE : '');
+}
+
+// ---- Words for the announcements and the explanation panel ----
+function layerWords(lp) {  // for the spoken description: values and themes of the layers that are on
+  const lay = lp && lp.layers;
+  if (!lay || lp.result.type !== 'land') return '';
+  const out = [];
+  if (layerOn.human && lay.human) out.push(`Human presence ${lay.human.c ? `${lay.human.label.replace('–', ' to ')} people per square kilometre` : 'under 1 person per square kilometre'}, ${HUMAN_THEME} theme`);
+  if (layerOn.wild && lay.wild) out.push(`Wildlife diversity ${lay.wild.n ? `${lay.wild.n} mammal species` : 'no data'}, ${WILD_THEME.replace('&', 'and')} theme`);
+  return out.length ? '. ' + out.join('. ') : '';
+}
+function layerRows(lp) {  // rows of "Why does it sound like this?" for the layers that are on, from the real mapping
+  const rows = [], lay = lp && lp.layers;
+  if (!lay || lp.result.type !== 'land') return rows;
+  if (layerOn.human && lay.human) {
+    const r = lay.human, s = humanSound(r.density);
+    rows.push(['Human presence', `${r.c ? `${r.label} people per km²` : 'Under 1 person per km²'} (GPW ${humanYear}) → ${HUMAN_THEME}. The more people, the more chaotic: the scale is logarithmic (1 person per km² is silent, 10 is a third of the way, 100 two thirds, 1000 or more is full).`]);
+    rows.push(['Crowd and traffic', `Murmur at ${Math.round(s.babble / humanSound(1000).babble * 100)}% and rumble at ${Math.round(s.rumble / humanSound(1000).rumble * 100)}% of their strength, the murmur centred near ${Math.round(s.babbleCutoff)} Hz and shaken at random ${(s.jitter * 10).toFixed(1)} times a second.`]);
+    rows.push(['Horns and clatter', `About ${+s.hornRate.toFixed(1)} horns and ${+s.clatterRate.toFixed(1)} bursts of clatter a second, on no musical scale (${s.h < 0.3 ? 'a quiet place: almost none' : s.h < 0.8 ? 'a busy place' : 'a very crowded place: constant'}). Dense places are capped at 1000 people per km², the top of NASA's colour scale.`]);
+  }
+  if (layerOn.wild && lay.wild) {
+    const r = lay.wild, s = wildSound(r.n);
+    rows.push(['Wildlife diversity', `${r.n ? `${r.n} mammal species` : 'No data'} (a 2013 picture, the same in every year; mammals only, no birds) → ${WILD_THEME}. The scale is logarithmic: more species, more life.`]);
+    rows.push(['Chirps', `About ${+s.chirpRate.toFixed(1)} soft chirps a second on a calm A major pentatonic scale${s.trill > 0.15 ? `, sometimes as a short run (${Math.round(s.trill * 100)}% of the time)` : ''}. They get more frequent and richer with the number of species, never harsh.`]);
+    rows.push(['Warmth and air', `A slow, warm chord at ${Math.round(s.pad / wildSound(200).pad * 100)}% and a fine airy layer at ${Math.round(s.air / wildSound(200).air * 100)}% of their strength.`]);
+  }
+  if (layerOn.human || layerOn.wild) rows.push(['Mixing', `The layers mix in proportion to their own values: a crowded place with many species is busy and lively at once. The dull land knock stays far behind them (${Math.round(LAND_KNOCK_BEHIND * 100)}% of its usual loudness).`]);
+  return rows;
+}
+
+// ---- Optional pictures over the land (Data view, half see-through) ----
+const layerCanvases = { human: document.createElement('canvas'), wild: document.createElement('canvas') };
+for (const c of Object.values(layerCanvases)) { c.width = 2048; c.height = 1024; }
+let layerPainted = { human: null, wild: null };  // which picture each canvas shows
+function paintLayerOverlays() {
+  for (const name of ['human', 'wild']) {
+    if (!layerShow[name]) continue;
+    const pic = name === 'human' ? humanPic : wildPic;
+    if (!pic || layerPainted[name] === pic) continue;
+    const land = getLandIce().getContext('2d').getImageData(0, 0, MAP_W, MAP_H).data;  // where there is land (or ice) in the saved picture
+    const palette = name === 'human' ? GPW_CLASSES : MAMMAL_CLASSES;
+    const g = layerCanvases[name].getContext('2d'), img = g.createImageData(pic.w, pic.h), out = new Uint32Array(img.data.buffer);
+    for (let y = 0; y < pic.h; y++) {
+      for (let x = 0; x < pic.w; x++) {
+        const c = pic.cls[y * pic.w + x];
+        if (!c) continue;
+        if (!land[((y >> 1) * MAP_W + (x >> 1)) * 4 + 3]) continue;  // the sea stays clear (the mammal picture also covers it)
+        const col = palette[c - 1];
+        out[y * pic.w + x] = ((255 << 24) | (col[2] << 16) | (col[1] << 8) | col[0]) >>> 0;
+      }
+    }
+    g.putImageData(img, 0, 0);
+    layerPainted[name] = pic;
+  }
+  for (const name of ['human', 'wild']) layerCanvases[name].style.opacity = layerShow[name] ? '0.55' : '0';
+}
+setTimeout(loadLayerPictures, 1200);  // a moment after the page opened: the page itself does not wait for these
+
+const layersBox = document.getElementById('layers');
+const wideScreen = window.matchMedia('(min-width: 1024px)');
+layersBox.open = wideScreen.matches;  // open beside the map; closed in the bar on a phone
+wideScreen.addEventListener('change', (e) => { layersBox.open = e.matches; });
 
 // ---- Base map: NASA GIBS tiles under the sea surface temperature picture (Leaflet) ----
 // Zoomed in, the picture alone has nothing to show on land. So a real map of the Earth from NASA GIBS (Blue Marble:
@@ -2330,6 +2776,7 @@ function initBaseMap() {
     baseLayer.on('tileerror', () => { batchErr++; });
     baseLayer.on('load', onTilesLoaded);
     sstOverlay = new CanvasOverlay(sstCanvas, [[-90, -180], [90, 180]], { zIndex: 1, className: 'leaflet-sst' }).addTo(lmap);
+    for (const [name, c] of Object.entries(layerCanvases)) new CanvasOverlay(c, [[-90, -180], [90, 180]], { zIndex: name === 'human' ? 4 : 5, className: 'leaflet-landlayer' }).addTo(lmap);  // optional pictures of the land layers
     for (const c of yearCanvases) new CanvasOverlay(c, [[-90, -180], [90, 180]], { zIndex: 3, className: 'leaflet-year' }).addTo(lmap);  // the steps of the years view (they cross-fade)
     window.addEventListener('online', () => { if (tilesStarted && tilesState === 'off') tryTiles(); });
     window.addEventListener('offline', () => { if (tilesState !== 'off') baseMapFailed(offlineText()); });
@@ -2440,6 +2887,7 @@ function applyView() {
   viewBtn.setAttribute('aria-label', noTiles ? 'Map view: Data view. Earth view needs the NASA base map, which is not available now.'
     : `Map view: ${earth ? 'Earth' : 'Data'} view. Press to switch to ${earth ? 'Data' : 'Earth'} view.`);
   opInput.disabled = earth || noTiles;
+  for (const b of Object.values(mapBoxes)) { b.disabled = noTiles; b.title = noTiles ? 'Needs the NASA base map, which is not available now' : ''; }  // the land pictures are shown by the base map view
   lgNote.hidden = !earth;
   if (lmap) {
     const pane = lmap.getPane('overlayPane');
