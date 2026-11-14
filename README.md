@@ -12,6 +12,7 @@ Made for the NASA International Space Apps Challenge 2026, challenge **The Earth
 - Reads the colour under the pointer and converts it back to a value in degrees Celsius (warmer or colder than normal) with the colour scale NASA published for the map.
 - Turns that value into sound **in real time with the Web Audio API**. There are no recorded audio files: every sound is synthesised in the browser.
 - Works without a mouse and without sight: full keyboard control, a spoken guide, screen reader announcements and place names.
+- Keeps everything in view: on a desktop the map screen fits the window without scrolling, with the colour scale and the value under the pointer in a side panel (on a phone they sit in a bar under the map that stays at the bottom of the window). A small label next to the pointer shows the value, and the long source notes are under "About & sources".
 - Runs entirely in the browser from a single `index.html`: no build step, no framework, and the page itself makes no network requests.
 
 ## How the sound works

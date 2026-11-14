@@ -12,22 +12,23 @@
   body { margin:0; color:var(--ink); line-height:1.45;
          font-family:system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
          background:radial-gradient(1200px 600px at 50% -10%, #12212f 0%, var(--bg) 62%) fixed; }
-  #app { max-width:1240px; margin:0 auto; padding:20px 20px 40px; }
+  #app { --pad:20px; max-width:1240px; margin:0 auto; padding:14px var(--pad) 20px; }
 
   /* Two separate screens: the landing screen and the map screen. Only one is ever on show.
      The old one leaves quickly (fades, drifts up a little) and the new one arrives a little slower
      (fades, rises a little). Only opacity and transform change, so it stays smooth. */
   .view { transition:opacity var(--t-in) var(--ease-out), transform var(--t-in) var(--ease-out); }
-  .view[hidden] { display:none; }
+  .view[hidden] { display:none !important; }  /* !important: a screen's own display rule must never keep it on show */
   .view.is-leaving { opacity:0; transform:translateY(-8px); transition-duration:var(--t-out); }
   .view.is-entering { opacity:0; transform:translateY(14px); }
   h1[tabindex="-1"]:focus { outline:none; }  /* after a screen change the heading takes focus quietly */
   :focus-visible { outline:3px solid var(--gold); outline-offset:3px; }
-  .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+  .sr-only { position:absolute; top:0; left:0; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
 
-  header { display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:12px 24px; margin-bottom:16px; }
-  h1 { margin:0; font-size:clamp(28px, 4vw, 40px); letter-spacing:.01em; }
-  .sub { margin:4px 0 0; color:var(--muted); font-size:16px; }
+  header { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px 20px; margin-bottom:12px; }
+  .brand { display:flex; flex-wrap:wrap; align-items:baseline; gap:0 14px; }
+  h1 { margin:0; font-size:clamp(24px, 3vw, 30px); letter-spacing:.01em; }
+  .sub { margin:0; color:var(--muted); font-size:15px; }
   .tools { display:flex; flex-wrap:wrap; gap:8px; }
   .tool { font:inherit; font-size:16px; color:var(--ink); background:var(--panel); border:1px solid var(--line);
           border-radius:10px; padding:10px 16px; min-height:44px; cursor:pointer; }
@@ -50,34 +51,83 @@
   #zoomlabel { position:absolute; left:12px; bottom:12px; font-size:14px; color:#fff; pointer-events:none;
                background:rgba(8,12,18,.72); padding:4px 12px; border-radius:999px; }
 
+  /* Side panel: what is under the pointer (the readout), the colour scale, and room for more later.
+     Wide screens: a column beside the map. Narrow screens: a bar under the map that sticks to the bottom
+     of the window, so the value and the scale stay in view while you explore the map. */
+  #side { display:flex; flex-direction:column; gap:12px; min-height:0; }
+  .readout { display:grid; grid-template-columns:auto 1fr; align-items:center; gap:2px 14px; padding:12px 16px;
+             background:var(--panel); border:1px solid var(--line); border-radius:14px; }
+  #r-chip { width:30px; height:30px; border-radius:50%; border:2px solid rgba(255,255,255,.6); background:#222; }
+  #r-value { font-size:clamp(28px, 4vw, 38px); font-weight:700; line-height:1.15; min-width:6ch; }
+  .r-where { grid-column:1 / -1; margin-top:4px; }
+  #r-place { font-size:20px; font-weight:600; line-height:1.25; }
+  #r-coords { color:var(--muted); font-size:15px; }
+  #side-extra { flex:1 1 auto; min-height:0; overflow:auto; }  /* room for the "why does it sound like this" panel */
+
   /* Colour scale: the same colours NASA used, with a pin that follows the value under the pointer */
-  #legend { margin-top:16px; padding:14px 20px 12px; background:var(--panel); border:1px solid var(--line); border-radius:14px; }
-  .lg-title { font-size:15px; color:var(--muted); margin-bottom:12px; }
+  #legend { padding:12px 16px 10px; background:var(--panel); border:1px solid var(--line); border-radius:14px; }
+  .lg-title { font-size:14px; color:var(--muted); margin-bottom:12px; }
   .lg-bar { position:relative; }
   #lg-canvas { width:100%; height:20px; display:block; border-radius:6px; }
   #lg-pin { position:absolute; top:-9px; width:0; height:0; border-left:7px solid transparent; border-right:7px solid transparent;
             border-top:10px solid #fff; transform:translateX(-50%); filter:drop-shadow(0 0 2px #000); }
-  .lg-ticks { display:flex; justify-content:space-between; margin-top:4px; font-size:14px; color:var(--muted); }
-  .lg-other { display:flex; flex-wrap:wrap; gap:6px 24px; margin-top:10px; font-size:14px; color:var(--muted); }
+  .lg-ticks { display:flex; justify-content:space-between; margin-top:4px; font-size:13px; color:var(--muted); }
+  .lg-other { display:flex; flex-wrap:wrap; gap:6px 20px; margin-top:8px; font-size:13px; color:var(--muted); }
   .sw { display:inline-block; width:14px; height:14px; border-radius:3px; vertical-align:-2px; margin-right:6px; }
   .sw.land { background:#6b6b6b; }
   .sw.ice { background:#b2b2b2; }
 
-  /* What is under the pointer right now */
-  .readout { display:flex; flex-wrap:wrap; align-items:center; gap:10px 28px; margin-top:16px; padding:16px 20px;
-             background:var(--panel); border:1px solid var(--line); border-radius:14px; min-height:88px; }
-  #r-chip { width:34px; height:34px; border-radius:50%; border:2px solid rgba(255,255,255,.6); background:#222; flex:none; }
-  #r-value { font-size:clamp(30px, 5vw, 46px); font-weight:700; line-height:1.1; min-width:6ch; }
-  #r-place { font-size:clamp(20px, 3vw, 26px); font-weight:600; }
-  #r-coords { color:var(--muted); font-size:16px; }
+  /* A small value label next to the pointer (or next to the ring, when the keyboard is in charge) */
+  #tip { position:absolute; left:0; top:0; z-index:3; pointer-events:none; white-space:nowrap; font-size:13px; line-height:1;
+         font-variant-numeric:tabular-nums; color:#fff; padding:4px 8px; border-radius:6px;
+         background:rgba(8,12,18,.78); border:1px solid rgba(255,255,255,.3); }
 
-  footer { margin-top:24px; color:var(--muted); font-size:14px; max-width:900px; }
-  footer p { margin:0 0 8px; }
+  /* One short source line under the map; the long notes are in the "About & sources" dialog */
+  #source { margin:10px 0 0; color:var(--muted); font-size:14px; }
+  .linklike { font:inherit; color:var(--gold); background:none; border:0; padding:8px 4px; text-decoration:underline; cursor:pointer; }
+  dialog { width:min(640px, calc(100% - 32px)); max-height:calc(100vh - 48px); overflow:auto; color:var(--ink); background:var(--panel);
+           border:1px solid var(--line); border-radius:14px; padding:20px 22px; }
+  dialog::backdrop { background:rgba(0,0,0,.65); }
+  dialog h2 { margin:0 0 10px; font-size:22px; }
+  dialog p { margin:0 0 10px; font-size:15px; }
 
+  /* Wide screens: the whole map screen fits in the window, with no scrolling. The map is the biggest 2:1 picture
+     that fits in its column (never cropped, never stretched); any spare room becomes empty space around it. */
+  @media (min-width: 1024px) {
+    #app:not([hidden]) { display:grid; grid-template-columns:minmax(0, 1fr) 320px; grid-template-rows:auto minmax(0, 1fr) auto;
+                         gap:10px 16px; height:100vh; height:100dvh; min-height:560px; max-width:none; padding:10px 20px 6px; }
+    header { grid-column:1 / -1; margin:0; }
+    h1 { font-size:24px; }
+    .tool { min-height:38px; padding:6px 14px; font-size:15px; }
+    #mapcol { grid-column:1; grid-row:2; min-width:0; min-height:0; container-type:size; display:grid; place-items:center; }
+    #frame { width:min(100cqw, 200cqh); }
+    #side { grid-column:2; grid-row:2; overflow:auto; }
+    #source { grid-column:1 / -1; grid-row:3; margin:0; }
+  }
+
+  /* Narrow screens: the value and the colour scale sit in a bar that sticks to the bottom of the window */
+  @media (max-width: 1023.98px) {
+    #side { position:sticky; bottom:0; z-index:5; gap:8px; margin:12px calc(var(--pad) * -1) 0;
+            padding:8px var(--pad) calc(8px + env(safe-area-inset-bottom)); background:rgba(7,11,17,.96); border-top:1px solid var(--line); }
+    .readout, #legend { padding:0; background:none; border:0; border-radius:0; }
+    .readout { grid-template-columns:auto auto 1fr; gap:0 12px; }
+    .r-where { grid-column:auto; margin:0; }
+    #r-value { font-size:28px; min-width:5.5ch; }
+    #r-place { font-size:17px; }
+    #r-coords { font-size:13px; }
+    .lg-title { font-size:12px; margin-bottom:10px; }
+    .lg-other { display:none; }
+    #side-extra:empty { display:none; }
+  }
   @media (max-width: 600px) {
-    #app { padding:12px 12px 32px; }
+    #app { --pad:12px; }
+    .sub { display:none; }
     #zoombar button { width:40px; height:40px; }
-    .lg-title { font-size:14px; }
+    .tool { font-size:14px; padding:8px 10px; min-height:40px; }  /* the three header buttons fit in one row */
+  }
+  @media (max-width: 359px) {
+    .readout { grid-template-columns:auto auto; }
+    .r-where { grid-column:1 / -1; margin-top:2px; }
   }
 
   /* Landing screen: first thing every visitor sees. Big text, big buttons, high contrast. */
@@ -109,7 +159,7 @@
 <body>
 <main id="app" class="view" aria-labelledby="app-title" hidden>
 <header>
-  <div>
+  <div class="brand">
     <h1 id="app-title" tabindex="-1">Earth Jukebox</h1>
     <p class="sub">Explore NASA's sea surface temperature map by sound</p>
   </div>
@@ -120,45 +170,56 @@
   </div>
 </header>
 
-<div id="frame">
-  <div id="stage">
-    <canvas id="map" tabindex="0" role="application"
-      aria-label="Sea surface temperature anomaly map. Use the arrow keys to move over the map, and Shift plus an arrow key to move faster. Plus and minus zoom in and out. Each position is spoken and played as sound."></canvas>
-    <canvas id="grid" aria-hidden="true"></canvas>
-    <div id="marker" hidden></div>
-    <div id="zoombar">
-      <button id="zin" type="button" aria-label="Zoom in" title="Zoom in (+)">+</button>
-      <button id="zout" type="button" aria-label="Zoom out" title="Zoom out (-)">&minus;</button>
-      <button id="zreset" type="button" aria-label="Show the whole map" title="Whole map (0)">&#8634;</button>
+<div id="mapcol">
+  <div id="frame">
+    <div id="stage">
+      <canvas id="map" tabindex="0" role="application"
+        aria-label="Sea surface temperature anomaly map. Use the arrow keys to move over the map, and Shift plus an arrow key to move faster. Plus and minus zoom in and out. Each position is spoken and played as sound."></canvas>
+      <canvas id="grid" aria-hidden="true"></canvas>
+      <div id="marker" hidden></div>
+      <div id="tip" aria-hidden="true" hidden></div>
+      <div id="zoombar">
+        <button id="zin" type="button" aria-label="Zoom in" title="Zoom in (+)">+</button>
+        <button id="zout" type="button" aria-label="Zoom out" title="Zoom out (-)">&minus;</button>
+        <button id="zreset" type="button" aria-label="Show the whole map" title="Whole map (0)">&#8634;</button>
+      </div>
+      <div id="zoomlabel" aria-hidden="true">Whole map</div>
     </div>
-    <div id="zoomlabel" aria-hidden="true">Whole map</div>
   </div>
 </div>
 
-<section id="legend" aria-hidden="true">
-  <div class="lg-title">Sea surface temperature anomaly: degrees Celsius warmer (+) or colder (&minus;) than normal</div>
-  <div class="lg-bar">
-    <canvas id="lg-canvas" width="800" height="20"></canvas>
-    <div id="lg-pin" hidden></div>
-  </div>
-  <div class="lg-ticks"><span>&minus;4</span><span>&minus;2</span><span>0</span><span>+2</span><span>+4 &deg;C</span></div>
-  <div class="lg-other"><span><i class="sw land"></i>Land</span><span><i class="sw ice"></i>Ice / no data</span></div>
-</section>
+<aside id="side" aria-label="Value and colour scale">
+  <section class="readout" aria-label="Current position">
+    <span id="r-chip"></span>
+    <div id="r-value">&mdash;</div>
+    <div class="r-where">
+      <div id="r-place">Move over the map</div>
+      <div id="r-coords">or press Tab to focus it and use the arrow keys</div>
+    </div>
+  </section>
 
-<section class="readout" aria-label="Current position">
-  <span id="r-chip"></span>
-  <div id="r-value">&mdash;</div>
-  <div>
-    <div id="r-place">Move over the map</div>
-    <div id="r-coords">or press Tab to focus it and use the arrow keys</div>
-  </div>
-</section>
+  <section id="legend" aria-hidden="true">
+    <div class="lg-title">Anomaly: &deg;C warmer (+) or colder (&minus;) than normal</div>
+    <div class="lg-bar">
+      <canvas id="lg-canvas" width="800" height="20"></canvas>
+      <div id="lg-pin" hidden></div>
+    </div>
+    <div class="lg-ticks"><span>&minus;4</span><span>&minus;2</span><span>0</span><span>+2</span><span>+4 &deg;C</span></div>
+    <div class="lg-other"><span><i class="sw land"></i>Land</span><span><i class="sw ice"></i>Ice / no data</span></div>
+  </section>
 
-<footer>
+  <div id="side-extra"></div>
+</aside>
+
+<p id="source">Map: NASA SVS #5176 &middot; Data: JPL MUR SST &middot; <button id="about-btn" class="linklike" type="button">About &amp; sources</button></p>
+
+<dialog id="about" aria-labelledby="about-title">
+  <h2 id="about-title">About &amp; sources</h2>
   <p>Map: NASA's Scientific Visualization Studio, <em>Sea Surface Temperature (SST) Anomaly &ndash; Near Real Time</em> (SVS #5176). Visualizer: Kel Elkins (USRA). Scientist: Atousa Saberi (NASA/GSFC). Data: JPL MUR SST analysis (PO.DAAC).</p>
   <p>This page shows the most recent frame that was available when it was downloaded, on 14 November 2026; it does not update by itself. 0&nbsp;&deg;C means &ldquo;same as normal&rdquo;; the source page does not state which reference period &ldquo;normal&rdquo; is based on. Values are read from the colours of the picture, so they are approximate, and the colour scale ends at &plusmn;4&nbsp;&deg;C.</p>
   <p>Earth Jukebox is a prototype made for the NASA International Space Apps Challenge 2026. It is not an official NASA website, and NASA does not endorse this project.</p>
-</footer>
+  <button id="about-close" class="tool" type="button" autofocus>Close</button>
+</dialog>
 </main>
 
 <div id="live" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
@@ -567,6 +628,9 @@ const marker = document.getElementById('marker');
 const zoomLabel = document.getElementById('zoomlabel');
 const gridBtn = document.getElementById('grid-btn');
 const lgPin = document.getElementById('lg-pin');
+const tip = document.getElementById('tip');   // the small value label next to the pointer
+let tipOn = false;                            // true while a mouse or finger is over the map
+let tipAnchor = null;                         // where that pointer is, in CSS pixels inside the map
 const cursor = { x: 512, y: 256 };  // current position in map pixels
 let liveToggle = false;
 let lastProbe = null;  // what the pointer is on right now, for the W (where am I) key
@@ -596,6 +660,7 @@ function render() {
   view.drawImage(data, b.x, b.y, b.w, b.h, 0, 0, W, H);
   drawGrid(b);
   placeMarker();
+  placeTip();
   zoomLabel.textContent = vw.zoom === 1 ? 'Whole map' : `${+vw.zoom.toFixed(1)}× zoom`;
 }
 
@@ -649,6 +714,24 @@ function placeMarker() {  // the white ring that shows where the keyboard is
   marker.style.top = p.y + 'px';
 }
 
+// The value label: beside the ring for the keyboard, beside the pointer for a mouse (below and to the right, so the
+// spot you point at stays uncovered), above the finger for touch. It flips to the other side near the edges.
+function placeTip() {
+  const r = canvas.getBoundingClientRect();
+  let ax, ay, gap, above = false;
+  if (markerOn) { const p = mapToCss(cursor.x + 0.5, cursor.y + 0.5); ax = p.x; ay = p.y; gap = 24; }
+  else if (tipOn && tipAnchor) { ax = tipAnchor.x; ay = tipAnchor.y; above = tipAnchor.touch; gap = above ? 40 : 14; }
+  else { tip.hidden = true; return; }
+  if (ax < 0 || ay < 0 || ax > r.width || ay > r.height) { tip.hidden = true; return; }
+  tip.hidden = false;
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  let x = ax + gap, y = above ? ay - gap - h : ay + gap;
+  if (x + w > r.width - 4) x = ax - gap - w;
+  if (y + h > r.height - 4) y = ay - gap - h;
+  if (y < 4) y = ay + gap;
+  tip.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
+}
+
 // Colour scale under the map: drawn from the same colour table the values are read with
 (function drawLegend() {
   const c = document.getElementById('lg-canvas'), g = c.getContext('2d');
@@ -687,7 +770,9 @@ function probe(x, y, announceIt) {
   else if (result.type === 'ice') rVal.textContent = 'Ice / no data';
   else rVal.textContent = (result.value > 0 ? '+' : result.value < 0 ? '−' : '') + Math.abs(result.value).toFixed(1) + ' °C';
   setPin(result.type === 'ocean' ? result.value : null);
+  tip.textContent = rVal.textContent;
   placeMarker();
+  placeTip();
 
   lastProbe = { result, place, lat, lon };
 
@@ -697,7 +782,10 @@ function probe(x, y, announceIt) {
 
 // ---- Pointer: hover to hear, drag to move the map, wheel or pinch to zoom ----
 const pointers = new Map();  // fingers / mouse buttons that are down right now
-function hearAt(clientX, clientY) {
+function hearAt(clientX, clientY, touch) {
+  const r = canvas.getBoundingClientRect();
+  tipAnchor = { x: clientX - r.left, y: clientY - r.top, touch: !!touch };
+  tipOn = true;
   const m = screenToMap(clientX, clientY);
   probe(m.x, m.y, false);
 }
@@ -721,7 +809,7 @@ canvas.addEventListener('pointerdown', (e) => {
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
   markerOn = false;
   if (e.pointerType === 'mouse') canvas.style.cursor = 'grabbing';
-  else if (pointers.size === 1) hearAt(e.clientX, e.clientY);  // one finger: hear what is under it
+  else if (pointers.size === 1) hearAt(e.clientX, e.clientY, true);  // one finger: hear what is under it
 });
 canvas.addEventListener('pointermove', (e) => {
   if (e.pointerType === 'mouse' && e.buttons === 0) { markerOn = false; hearAt(e.clientX, e.clientY); return; }  // plain hover
@@ -729,8 +817,8 @@ canvas.addEventListener('pointermove', (e) => {
   if (!prev) return;
   const now = { x: e.clientX, y: e.clientY };
   if (pointers.size === 1) {
-    if (e.pointerType === 'mouse') panBy(now.x - prev.x, now.y - prev.y);  // mouse drag moves the map
-    else hearAt(now.x, now.y);                                            // one finger slides over the map
+    if (e.pointerType === 'mouse') { tipOn = false; panBy(now.x - prev.x, now.y - prev.y); }  // mouse drag moves the map
+    else hearAt(now.x, now.y, true);                                                         // one finger slides over the map
   } else if (pointers.size === 2) {                                        // two fingers: pinch to zoom and move
     const other = [...pointers].find(([id]) => id !== e.pointerId)[1];
     const d0 = Math.hypot(prev.x - other.x, prev.y - other.y), d1 = Math.hypot(now.x - other.x, now.y - other.y);
@@ -744,11 +832,13 @@ canvas.addEventListener('pointermove', (e) => {
 function endPointer(e) {
   pointers.delete(e.pointerId);
   canvas.style.cursor = '';
-  if (e.pointerType !== 'mouse') updateSound(null);  // finger lifted: the sound fades out
+  if (e.pointerType !== 'mouse') { tipOn = false; placeTip(); updateSound(null); }  // finger lifted: label and sound go
 }
 canvas.addEventListener('pointerup', endPointer);
 canvas.addEventListener('pointercancel', endPointer);
-canvas.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse' && pointers.size === 0) updateSound(null); });
+canvas.addEventListener('pointerleave', (e) => {
+  if (e.pointerType === 'mouse' && pointers.size === 0) { tipOn = false; placeTip(); updateSound(null); }
+});
 canvas.addEventListener('wheel', (e) => {
   e.preventDefault();
   zoomAt(vw.zoom * Math.exp(-e.deltaY * (e.ctrlKey ? 0.006 : 0.0015)), e.clientX, e.clientY);
@@ -809,7 +899,7 @@ function onMapKey(e) {  // also used by the global key handler in voice mode
   probe(x, y, true);
 }
 canvas.addEventListener('keydown', onMapKey);
-canvas.addEventListener('blur', () => { updateSound(null); markerOn = false; placeMarker(); });
+canvas.addEventListener('blur', () => { updateSound(null); markerOn = false; placeMarker(); placeTip(); });
 
 if ('ResizeObserver' in window) new ResizeObserver(resize).observe(canvas);  // the map frame changed size
 window.addEventListener('resize', resize);                                    // fallback for the window itself
@@ -972,6 +1062,7 @@ function show(name, entry) {
 
 function openLanding() {  // the Accessibility options button, or Ctrl + Alt + B
   if ('speechSynthesis' in window) speechSynthesis.cancel();
+  if (aboutDlg.open) aboutDlg.close();
   if (screen === 'landing') { show('ask', true); HEADINGS.landing.focus({ preventScroll: true }); return; }
   updateSound(null);  // the data sound fades away; the ambient bed and the Start / Stop state stay as they are
   showScreen('landing', () => show('ask', true));
@@ -993,6 +1084,12 @@ wYes.addEventListener('click', () => STEPS[step].onYes());
 wNo.addEventListener('click', () => STEPS[step].onNo());
 document.getElementById('access').addEventListener('click', openLanding);
 
+// ---- "About & sources": the long notes, in a dialog (the page behind it is locked while it is open) ----
+const aboutDlg = document.getElementById('about');
+document.getElementById('about-btn').addEventListener('click', () => aboutDlg.showModal());
+document.getElementById('about-close').addEventListener('click', () => aboutDlg.close());
+aboutDlg.addEventListener('click', (e) => { if (e.target === aboutDlg) aboutDlg.close(); });  // a click on the dark backdrop
+
 // ---- Keys that work everywhere ----
 document.addEventListener('keydown', (e) => {
   const k = e.key.toLowerCase();
@@ -1008,7 +1105,7 @@ document.addEventListener('keydown', (e) => {
     return;
   }
 
-  if (e.ctrlKey || e.altKey || e.metaKey) return;
+  if (e.ctrlKey || e.altKey || e.metaKey || aboutDlg.open) return;  // (while the dialog is open, keys belong to it)
   // Voice mode: after a screen change the heading has focus, so the arrow keys work from there too.
   if (mode === 'voice' && ARROWS[e.key] && document.activeElement !== canvas && document.activeElement.tagName !== 'BUTTON') {
     canvas.focus();
