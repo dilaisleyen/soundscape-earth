@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Earth Jukebox</title>
 <style>
   :root { --bg:#070b11; --panel:#0e141c; --line:#243040; --ink:#e8edf3; --muted:#9fb0c2; --gold:#ffd54a; }
@@ -133,7 +134,8 @@
 </section>
 
 <footer>
-  <p>Map: NASA's Scientific Visualization Studio, <em>Sea Surface Temperature (SST) Anomaly &ndash; Near Real Time</em> (SVS #5176), made from JPL MUR SST data (PO.DAAC). Values are read from the colours of the picture, so they are approximate.</p>
+  <p>Map: NASA's Scientific Visualization Studio, <em>Sea Surface Temperature (SST) Anomaly &ndash; Near Real Time</em> (SVS #5176). Visualizer: Kel Elkins (USRA). Scientist: Atousa Saberi (NASA/GSFC). Data: JPL MUR SST analysis (PO.DAAC).</p>
+  <p>This page shows the most recent frame that was available when it was downloaded, on 14 November 2026; it does not update by itself. 0&nbsp;&deg;C means &ldquo;same as normal&rdquo;; the source page does not state which reference period &ldquo;normal&rdquo; is based on. Values are read from the colours of the picture, so they are approximate, and the colour scale ends at &plusmn;4&nbsp;&deg;C.</p>
   <p>Earth Jukebox is a prototype made for the NASA International Space Apps Challenge 2026. It is not an official NASA website, and NASA does not endorse this project.</p>
 </footer>
 </div>
@@ -803,7 +805,10 @@ function speak(text) {
   lastAnnouncement = text;
   if (!('speechSynthesis' in window)) return;
   speechSynthesis.cancel();  // a new sentence replaces the old one, like a screen reader does
-  for (const sentence of text.split(/(?<=[.?!])\s+/)) {  // short pieces: some browsers cut off long ones
+  // Short pieces: some browsers cut off long ones. (Written without a regex "lookbehind" on purpose:
+  // Safari before 16.4 cannot even load a page that contains one.)
+  for (const sentence of text.replace(/([.?!])\s+/g, '$1\n').split('\n')) {
+    if (!sentence) continue;
     const u = new SpeechSynthesisUtterance(sentence);
     u.lang = 'en-US';
     speechSynthesis.speak(u);
