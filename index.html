@@ -40,9 +40,18 @@
   /* The map: a framed 2:1 stage. Two canvases and the zoom buttons sit on top of each other inside it. */
   #frame { border:1px solid var(--line); border-radius:16px; overflow:hidden; background:#000; box-shadow:0 20px 60px rgba(0,0,0,.5); }
   /* The time slider under the map: one picture per month, plus the latest */
-  #timebar { display:flex; align-items:center; gap:10px; margin-top:8px; min-height:40px; }
+  #timebar { display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; margin-top:8px; min-height:40px; }
   #timebar label { font-weight:600; font-size:15px; }
-  #time { flex:1; min-width:0; height:32px; accent-color:var(--gold); cursor:pointer; }
+  #time { flex:1; min-width:120px; height:32px; accent-color:var(--gold); cursor:pointer; }
+  #opgroup { display:flex; align-items:center; gap:8px; flex:0 0 auto; }
+  #opgroup label { font-weight:600; font-size:15px; }
+  #sst-op { width:110px; height:32px; accent-color:var(--gold); cursor:pointer; }
+  #sst-op:disabled { opacity:.5; cursor:not-allowed; }
+  #sst-op-val { min-width:3.2em; font-variant-numeric:tabular-nums; color:var(--muted); font-size:14px; }
+  .tool[data-view="data"] { border-color:var(--gold); color:var(--gold); }
+  .tool:disabled { opacity:.5; cursor:not-allowed; }
+  #lg-note { margin:8px 0 0; font-size:13px; color:var(--muted); }
+  #lg-note[hidden] { display:none; }
   #time-date { min-width:6.5em; text-align:right; font-weight:600; font-variant-numeric:tabular-nums; color:var(--gold); }
   #time-status, #live-status { color:var(--muted); font-size:13px; }
   #live-status { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -58,7 +67,9 @@
   #basemap { position:absolute; inset:0; z-index:0; pointer-events:none; background:#000; visibility:hidden; }
   #basemap.on { visibility:visible; }
   #stage #basemap canvas { inset:auto; left:0; top:0; max-width:none; pointer-events:none; }  /* the overlays are canvases: Leaflet gives them their place and size */
-  #basemap.crisp .leaflet-live { image-rendering:pixelated; }
+  /* The temperature layers (both overlays) lie in Leaflet's overlay pane: its opacity is the Data opacity slider, and it fades
+     in and out when the view changes. They are always smooth (soft blending between pixels), never blocks. */
+  #basemap .leaflet-overlay-pane { opacity:0; transition:opacity 220ms var(--ease-out); }
   #mapnote { position:absolute; left:12px; top:12px; max-width:calc(100% - 84px); font-size:13px; line-height:1.3; color:#fff;
              background:rgba(8,12,18,.8); padding:4px 12px; border-radius:999px; pointer-events:none; }
   #mapnote[hidden], #gibs-credit[hidden] { display:none; }
@@ -195,6 +206,7 @@
   /* Reduced motion: no drifting or pressing, only short fades */
   @media (prefers-reduced-motion: reduce) {
     :root { --t-in:120ms; --t-out:80ms; }
+    #basemap .leaflet-overlay-pane { transition:none; }
     .view.is-leaving, .view.is-entering { transform:none; }
     .tool:active, #w-actions button:active, #zoombar button:active { transform:none; }
   }
@@ -211,6 +223,7 @@
     <button id="start" class="tool primary" type="button">Start sound</button>
     <button id="grid-btn" class="tool" type="button" aria-pressed="true" aria-keyshortcuts="G">Grid</button>
     <button id="labels-btn" class="tool" type="button" aria-pressed="true" aria-keyshortcuts="L" title="Country names on the map">Labels</button>
+    <button id="view-btn" class="tool" type="button" data-view="earth" aria-keyshortcuts="V" aria-label="Map view: Earth view. Press to switch to Data view." title="Switch between Earth view and Data view (V)">Earth view</button>
     <button id="ui-btn" class="tool" type="button" aria-pressed="true" aria-keyshortcuts="U" title="Soft sounds for buttons, zoom and screen changes">UI sounds</button>
     <button id="access" class="tool" type="button" aria-keyshortcuts="Control+Alt+B">Accessibility options</button>
   </div>
@@ -246,6 +259,7 @@
     <button id="live-btn" class="tool" type="button" aria-pressed="true" title="Ask NASA GIBS for finer, up-to-date pictures of the area on screen">Live detail</button>
     <span id="live-status"></span>
     <span id="time-status"></span>
+    <span id="opgroup"><label for="sst-op">Data opacity</label><input id="sst-op" type="range" min="0" max="100" step="5" value="75" aria-valuetext="75 percent" disabled><output id="sst-op-val" for="sst-op">75%</output></span>
   </div>
 </div>
 
@@ -268,6 +282,7 @@
     </div>
     <div class="lg-ticks"><span>&minus;4</span><span>&minus;2</span><span>0</span><span>+2</span><span>+4 &deg;C</span></div>
     <div class="lg-other"><span><i class="sw land"></i>Land</span><span><i class="sw ice"></i>Ice / no data</span></div>
+    <p id="lg-note" hidden>Switch to Data view to see these colours on the map.</p>
   </section>
 
   <div id="side-extra" tabindex="0" role="region" aria-label="Explanation of the sound (scrollable)">
@@ -352,6 +367,8 @@ const lockMark = document.getElementById('lockmark');
 // first drawing already looks at it. 'off': only the saved picture is shown. 'trying': tiles are being asked for, the
 // saved picture is still shown. 'on': tiles and the picture as a see-through overlay are shown.
 let tilesState = 'off';
+let viewMode = 'earth';   // 'earth': only the base map is shown; 'data': the temperature layers are shown over it (see applyView)
+let sstOpacity = 0.75;    // how solid the temperature layers are in the Data view
 let lmap = null, baseLayer = null, sstOverlay = null, liveOverlay = null;
 let sstFrame = -1, lastLive = null;  // which saved picture / live picture the overlays hold
 const basemapEl = document.getElementById('basemap');
@@ -843,7 +860,7 @@ function mapToCss(mx, my) {               // a point of the real picture -> CSS 
 function render() {
   const W = canvas.width, H = canvas.height, b = viewBox();
   view.clearRect(0, 0, W, H);
-  if (tilesState !== 'on') {  // no base map: the saved picture (and the live detail) are drawn here, as before
+  if (tilesState === 'off' || (tilesState === 'trying' && viewMode === 'data')) {  // no base map (yet): the saved picture (and the live detail) are drawn here, as before
     view.imageSmoothingEnabled = W / b.w < 3;  // zoomed in far: show the real pixels instead of a blur
     view.drawImage(data, b.x, b.y, b.w, b.h, 0, 0, W, H);
     drawDetail(b);  // the live picture from GIBS, if there is one for this area
@@ -1228,7 +1245,7 @@ const GUIDE = "Earth Jukebox turns NASA's sea surface temperature map into sound
   'Press W to hear where you are, R to repeat, H for help, and Space to stop or start the sound.';
 const HELP = 'Arrow keys move over the map. Hold Shift to move faster. W says where you are. ' +
   'Plus and minus zoom in and out, and zero shows the whole map. G turns the grid on or off. ' +
-  'Click the map with the mouse to lock the sound on that spot, and right-click to release it. L turns the country names on or off. U turns the interface sounds on or off. E says why the current place sounds the way it does, and D gives the details. ' +
+  'Click the map with the mouse to lock the sound on that spot, and right-click to release it. L turns the country names on or off. V switches between Earth view and Data view. U turns the interface sounds on or off. E says why the current place sounds the way it does, and D gives the details. ' +
   'R repeats the last message. Space starts or stops the sound. ' +
   'Control, Alt and B reopen the accessibility options.';
 
@@ -1924,6 +1941,7 @@ document.addEventListener('keydown', (e) => {
   else if (k === 'g') toggleGrid();
   else if (k === 'u') toggleUiSounds();
   else if (k === 'l') toggleLabels();
+  else if (k === 'v') toggleView();
   else if (k === 'e') explainShort();
   else if (k === 'd') explainDetail();
 });
@@ -2021,11 +2039,13 @@ function setTilesOn() {
   basemapEl.classList.add('on');
   mapNote.hidden = true;
   noteAnnounced = false;
+  applyView();
   render();
 }
 function tryTiles() {  // the saved picture stays on screen until a whole view of tiles has arrived
   clearTimeout(retryTimer);
   tilesState = 'trying';
+  applyView();
   batchOk = 0; batchErr = 0;
   clearTimeout(tryTimer);
   tryTimer = setTimeout(() => { if (tilesState === 'trying') baseMapFailed(offlineText()); }, TILE_WAIT_MS);
@@ -2036,6 +2056,7 @@ function baseMapFailed(text) {
   clearTimeout(tryTimer); clearTimeout(retryTimer);
   tilesState = 'off';
   basemapEl.classList.remove('on');
+  applyView();
   mapNote.textContent = text;
   mapNote.hidden = false;
   if (!noteAnnounced) { noteAnnounced = true; announce(text); }  // said once per outage, not at every retry
@@ -2063,8 +2084,6 @@ function syncBaseMap(b) {
   // picture covers the whole view and is already in place, only that one is shown.
   const hideSaved = !!lastLive && liveInstalled === lastLive && coversView(lastLive, wantedDetail());
   if (hideSaved !== savedHidden) { savedHidden = hideSaved; sstCanvas.style.opacity = hideSaved ? 0 : 1; }
-  // zoomed in far, the live picture shows its real pixels instead of a blur (as the canvas drawing did)
-  basemapEl.classList.toggle('crisp', !!lastLive && (size.x / spanLon) / (lastLive.w / (lastLive.lon1 - lastLive.lon0)) >= 2);
 }
 
 // The saved picture as an overlay: a COPY of it where land and ice are see-through (the original is never changed).
@@ -2086,6 +2105,53 @@ function makeLiveOverlay(d) {
   if (!lmap.hasLayer(liveOverlay)) liveOverlay.addTo(lmap);
   liveInstalled = d;
 }
+// ---- Earth view and Data view ----
+// Earth view: only NASA's base map is shown. Data view: the temperature layers are shown over it, as solid as the
+// Data opacity slider says. The mode changes only what is SHOWN: the readout, the value label, the sound and the spoken
+// text are read from the original picture exactly the same in both. Without the base map there is only the data view.
+// The way the layers blend with the base map (a CSS blend mode) can be tried with ?blend=soft-light etc. in the address.
+const BLENDS = ['normal', 'multiply', 'screen', 'overlay', 'soft-light', 'hard-light', 'color', 'hue', 'saturation', 'luminosity'];
+const BLEND = (() => { const b = new URLSearchParams(location.search).get('blend'); return BLENDS.includes(b) ? b : 'normal'; })();
+const viewBtn = document.getElementById('view-btn');
+const opInput = document.getElementById('sst-op');
+const opVal = document.getElementById('sst-op-val');
+const lgNote = document.getElementById('lg-note');
+
+function applyView() {
+  const noTiles = tilesState === 'off';
+  const earth = viewMode === 'earth' && !noTiles;  // without the base map the data is all there is to show
+  viewBtn.textContent = earth ? 'Earth view' : 'Data view';
+  viewBtn.dataset.view = earth ? 'earth' : 'data';
+  viewBtn.disabled = noTiles;
+  viewBtn.setAttribute('aria-label', noTiles ? 'Map view: Data view. Earth view needs the NASA base map, which is not available now.'
+    : `Map view: ${earth ? 'Earth' : 'Data'} view. Press to switch to ${earth ? 'Data' : 'Earth'} view.`);
+  opInput.disabled = earth || noTiles;
+  lgNote.hidden = !earth;
+  if (lmap) {
+    const pane = lmap.getPane('overlayPane');
+    pane.style.opacity = tilesState === 'on' && !earth ? sstOpacity : 0;
+    pane.style.mixBlendMode = BLEND;
+  }
+  if (tilesState === 'trying' && earth) { mapNote.textContent = 'Loading the base map…'; mapNote.hidden = false; }
+  else if (tilesState !== 'off') mapNote.hidden = true;
+}
+function toggleView() {
+  if (tilesState === 'off') { announce('Earth view needs the NASA base map, which is not available now. Only the Data view can be shown.'); return; }
+  viewMode = viewMode === 'earth' ? 'data' : 'earth';
+  applyView();
+  render();
+  announce(viewMode === 'earth'
+    ? 'Earth view. Only the NASA base map is shown. Values, sounds and texts still come from the temperature data.'
+    : `Data view. The temperature colours are shown over the base map at ${Math.round(sstOpacity * 100)} percent.`);
+}
+viewBtn.addEventListener('click', toggleView);
+opInput.addEventListener('input', () => {
+  sstOpacity = opInput.value / 100;
+  opVal.textContent = `${opInput.value}%`;
+  opInput.setAttribute('aria-valuetext', `${opInput.value} percent`);
+  applyView();
+});
+applyView();
 initBaseMap();
 
 // ---- Start: the landing screen, unless this visitor already chose ----
