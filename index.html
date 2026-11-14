@@ -7,10 +7,12 @@
   body { background:#111; color:#eee; font-family:sans-serif; margin:20px; }
   canvas { max-width:100%; cursor:crosshair; display:block; }
   #info { font-size:22px; margin-top:12px; min-height:30px; }
+  #start { font-size:18px; padding:8px 18px; margin-bottom:12px; cursor:pointer; }
 </style>
 </head>
 <body>
 <h1>Earth Jukebox</h1>
+<button id="start">Start sound</button>
 <canvas id="map" width="1024" height="512"></canvas>
 <div id="info">Move the mouse over the map</div>
 
@@ -42,6 +44,65 @@ function readPixel(r, g, b) {
   return { type: 'ocean', value: best[0] };
 }
 
+// ---- Sound engine (Web Audio API) ----
+let audio = null;     // created on the first click (browsers block sound before a user gesture)
+const SMOOTH = 0.08;  // seconds: how quickly the sound follows the pointer
+
+function startAudio() {
+  const ac = new AudioContext();
+  const pan = ac.createStereoPanner();
+  pan.connect(ac.destination);
+
+  // continuous tone for ocean values
+  const osc = ac.createOscillator();
+  const toneGain = ac.createGain();
+  toneGain.gain.value = 0;
+  osc.connect(toneGain).connect(pan);
+  osc.start();
+
+  // looped white noise for ice / no data
+  const buf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate);
+  const samples = buf.getChannelData(0);
+  for (let i = 0; i < samples.length; i++) samples[i] = Math.random() * 2 - 1;
+  const noise = ac.createBufferSource();
+  noise.buffer = buf;
+  noise.loop = true;
+  const noiseGain = ac.createGain();
+  noiseGain.gain.value = 0;
+  noise.connect(noiseGain).connect(pan);
+  noise.start();
+
+  audio = { ac, pan, osc, toneGain, noiseGain };
+}
+
+// PLACEHOLDER mapping (replaced in step 3): what each kind of point sounds like
+function soundFor(result) {
+  if (result.type === 'land') return { freq: null, tone: 0, noise: 0 };     // silence
+  if (result.type === 'ice')  return { freq: null, tone: 0, noise: 0.05 };  // soft hiss
+  return { freq: 220 * 2 ** (result.value / 4), tone: 0.2, noise: 0 };      // -4 -> 110 Hz, 0 -> 220 Hz, +4 -> 440 Hz
+}
+
+// result = null fades everything out (pointer left the map)
+function updateSound(result, lon) {
+  if (!audio) return;
+  const t = audio.ac.currentTime;
+  const s = result ? soundFor(result) : { freq: null, tone: 0, noise: 0 };
+  if (s.freq) audio.osc.frequency.setTargetAtTime(s.freq, t, SMOOTH);
+  audio.toneGain.gain.setTargetAtTime(s.tone, t, SMOOTH);
+  audio.noiseGain.gain.setTargetAtTime(s.noise, t, SMOOTH);
+  if (result) audio.pan.pan.setTargetAtTime(lon / 180, t, SMOOTH);  // longitude -> left/right
+}
+
+const startBtn = document.getElementById('start');
+startBtn.addEventListener('click', () => {
+  if (!audio) startAudio();
+  else if (audio.ac.state === 'running') audio.ac.suspend();
+  else audio.ac.resume();
+  startBtn.textContent = audio.ac.state === 'running' ? 'Stop sound' : 'Start sound';
+});
+
+canvas.addEventListener('mouseleave', () => updateSound(null));
+
 canvas.addEventListener('mousemove', (e) => {
   const rect = canvas.getBoundingClientRect();
   const x = Math.floor((e.clientX - rect.left) * 1024 / rect.width);
@@ -53,6 +114,8 @@ canvas.addEventListener('mousemove', (e) => {
   // flat map: left edge = -180°, right edge = +180°, top = 90°N, bottom = 90°S
   const lon = (x / 1024 * 360 - 180).toFixed(1);
   const lat = (90 - y / 512 * 180).toFixed(1);
+
+  updateSound(result, Number(lon));
 
   let text;
   if (result.type === 'land') text = 'Land';
