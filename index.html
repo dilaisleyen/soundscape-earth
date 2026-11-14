@@ -2,19 +2,29 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Earth Jukebox – Step 1: Data Reader</title>
+<title>Earth Jukebox</title>
 <style>
   body { background:#111; color:#eee; font-family:sans-serif; margin:20px; }
   canvas { max-width:100%; cursor:crosshair; display:block; }
   #info { font-size:22px; margin-top:12px; min-height:30px; }
   #start { font-size:18px; padding:8px 18px; margin-bottom:12px; cursor:pointer; }
+  #stage { position:relative; display:inline-block; max-width:100%; }
+  canvas:focus-visible, #start:focus-visible { outline:3px solid #ffd54a; outline-offset:3px; }
+  #marker { position:absolute; width:26px; height:26px; box-sizing:border-box; border:3px solid #fff; border-radius:50%;
+            box-shadow:0 0 0 2px #000; transform:translate(-50%,-50%); pointer-events:none; }
+  .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
 </style>
 </head>
 <body>
 <h1>Earth Jukebox</h1>
 <button id="start">Start sound</button>
-<canvas id="map" width="1024" height="512"></canvas>
-<div id="info">Move the mouse over the map</div>
+<div id="stage">
+  <canvas id="map" width="1024" height="512" tabindex="0" role="application"
+    aria-label="Sea surface temperature anomaly map. Use the arrow keys to move over the map, and Shift plus an arrow key to move faster. Each position is spoken and played as sound."></canvas>
+  <div id="marker" hidden></div>
+</div>
+<div id="info">Move the mouse over the map, or press Tab to focus it and use the arrow keys</div>
+<div id="live" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
 
 <script>
 // Color table read from NASA's colorbar: [value °C, R, G, B]
@@ -265,29 +275,112 @@ startBtn.addEventListener('click', () => {
   startBtn.textContent = audio.ac.state === 'running' ? 'Stop sound' : 'Start sound';
 });
 
-canvas.addEventListener('mouseleave', () => updateSound(null));
+// ---- Place names ----
+// Rough rectangles [name, latMin, latMax, lonMin, lonMax], good enough to say "where am I".
+// The first match wins, so specific places come before the big oceans / continents.
+const OCEAN_PLACES = [
+  ['Arctic Ocean', 66, 90, -180, 180],
+  ['Southern Ocean', -90, -60, -180, 180],
+  ['Mediterranean Sea', 30, 46, -6, 36],
+  ['Gulf of Mexico', 18, 30, -98, -82],
+  ['Caribbean Sea', 12, 22, -88, -62],
+  ['Arabian Sea', 5, 25, 52, 75],
+  ['Bay of Bengal', 5, 23, 80, 100],
+  ['South China Sea', 0, 23, 105, 120],
+  ['Indian Ocean', -60, 30, 20, 120],
+  ['North Atlantic', 0, 66, -80, 20],
+  ['South Atlantic', -60, 0, -70, 20],
+  ['North Pacific', 0, 66, 120, 180],
+  ['North Pacific', 0, 66, -180, -80],
+  ['South Pacific', -60, 0, 120, 180],
+  ['South Pacific', -60, 0, -180, -70],
+];
+const LAND_PLACES = [
+  ['Antarctica', -90, -60, -180, 180],
+  ['Greenland', 60, 84, -75, -10],
+  ['Europe', 36, 72, -10, 30],
+  ['Europe', 50, 72, 30, 60],
+  ['Arabian Peninsula', 12, 30, 39, 60],
+  ['Africa', -35, 37, -18, 52],
+  ['North America', 7, 84, -170, -50],
+  ['South America', -56, 13, -82, -34],
+  ['Australia', -45, -10, 112, 155],
+  ['New Zealand', -48, -34, 166, 179],
+  ['Asia', -10, 78, 25, 180],
+];
+function placeName(type, lat, lon) {
+  if (type === 'ice') return lat > 45 ? 'Arctic' : lat < -45 ? 'Antarctic' : 'Ice or no data area';
+  for (const [name, la0, la1, lo0, lo1] of type === 'land' ? LAND_PLACES : OCEAN_PLACES) {
+    if (lat >= la0 && lat <= la1 && lon >= lo0 && lon <= lo1) return name;
+  }
+  return type === 'land' ? 'Land' : 'Open ocean';
+}
 
-canvas.addEventListener('mousemove', (e) => {
-  const rect = canvas.getBoundingClientRect();
-  const x = Math.floor((e.clientX - rect.left) * 1024 / rect.width);
-  const y = Math.floor((e.clientY - rect.top) * 512 / rect.height);
+// What a screen reader says, e.g. "North Atlantic, plus 2.3 degrees"
+function describe(result, place) {
+  if (result.type === 'land') return `${place}, land`;
+  if (result.type === 'ice') return `${place}, ice or no data`;
+  const v = Math.round(result.value * 10) / 10;
+  if (v === 0) return `${place}, 0.0 degrees`;
+  return `${place}, ${v > 0 ? 'plus' : 'minus'} ${Math.abs(v).toFixed(1)} degrees`;
+}
 
+// ---- One function for every way of pointing at the map (mouse or keyboard) ----
+const live = document.getElementById('live');
+const marker = document.getElementById('marker');
+const cursor = { x: 512, y: 256 };  // current position in map pixels
+let liveToggle = false;
+
+function probe(x, y, speak) {
+  cursor.x = x;
+  cursor.y = y;
   const [r, g, b] = ctx.getImageData(x, y, 1, 1).data;
   const result = readPixel(r, g, b);
 
   // flat map: left edge = -180°, right edge = +180°, top = 90°N, bottom = 90°S
-  const lon = (x / 1024 * 360 - 180).toFixed(1);
-  const lat = (90 - y / 512 * 180).toFixed(1);
+  const lon = x / 1024 * 360 - 180;
+  const lat = 90 - y / 512 * 180;
+  updateSound(result, lon);
 
-  updateSound(result, Number(lon));
-
+  const place = placeName(result.type, lat, lon);
   let text;
   if (result.type === 'land') text = 'Land';
   else if (result.type === 'ice') text = 'Ice / no data';
   else text = (result.value > 0 ? '+' : '') + result.value.toFixed(1) + ' °C';
+  info.textContent = `${place} · Lat ${lat.toFixed(1)}°, Lon ${lon.toFixed(1)}° → ${text}`;
 
-  info.textContent = `Lat ${lat}°, Lon ${lon}° → ${text}`;
+  // Only keyboard moves are spoken: mouse users see the text, and speaking every pixel would flood a screen reader.
+  // The invisible no-break space flips each time so an identical sentence is still announced again.
+  if (speak) {
+    liveToggle = !liveToggle;
+    live.textContent = describe(result, place) + (liveToggle ? ' ' : '');
+  }
+}
+
+canvas.addEventListener('mousemove', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  marker.hidden = true;
+  probe(Math.floor((e.clientX - rect.left) * 1024 / rect.width),
+        Math.floor((e.clientY - rect.top) * 512 / rect.height), false);
 });
+canvas.addEventListener('mouseleave', () => updateSound(null));
+
+// ---- Keyboard: arrow keys move one grid cell, Shift + arrow moves four ----
+const CELL = 16;  // pixels per step = 5.6° of longitude / latitude
+const ARROWS = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+canvas.addEventListener('keydown', (e) => {
+  const dir = ARROWS[e.key];
+  if (!dir) return;  // any other key (Tab, etc.) keeps its normal job
+  e.preventDefault();
+  const n = (e.shiftKey ? 4 : 1) * CELL;
+  const x = (cursor.x + dir[0] * n + 1024) % 1024;                    // the world wraps around east-west
+  const y = Math.max(0, Math.min(511, cursor.y + dir[1] * n));        // but stops at the poles
+  marker.style.left = (x / 1024 * 100) + '%';
+  marker.style.top = (y / 512 * 100) + '%';
+  marker.hidden = false;
+  probe(x, y, true);
+});
+canvas.addEventListener('blur', () => { updateSound(null); marker.hidden = true; });
 </script>
 </body>
 </html>
