@@ -257,8 +257,11 @@
 
 <dialog id="about" aria-labelledby="about-title">
   <h2 id="about-title">About &amp; sources</h2>
-  <p>Map: NASA's Scientific Visualization Studio, <em>Sea Surface Temperature (SST) Anomaly &ndash; Near Real Time</em> (SVS #5176). Visualizer: Kel Elkins (USRA). Scientist: Atousa Saberi (NASA/GSFC). Data: JPL MUR SST analysis (PO.DAAC).</p>
-  <p>The map opens on the most recent frame that was available when the page was made (11 November 2026, downloaded on 14 November 2026); it does not update by itself. The time slider shows one frame for the first available day of each month from June 2024, from the same NASA series. NASA publishes these frames only as 4096 &times; 2048 EXR files, so each one was converted to a 1024 &times; 512 JPEG picture and is read with the same colour table. 0&nbsp;&deg;C means &ldquo;same as normal&rdquo;; the source page does not state which reference period &ldquo;normal&rdquo; is based on. Values are read from the colours of the picture, so they are approximate, and the colour scale ends at &plusmn;4&nbsp;&deg;C.</p>
+  <div id="about-sources">
+    <p>Map: NASA's Scientific Visualization Studio, <em>Sea Surface Temperature (SST) Anomaly &ndash; Near Real Time</em> (SVS #5176). Visualizer: Kel Elkins (USRA). Scientist: Atousa Saberi (NASA/GSFC). Data: JPL MUR SST analysis (PO.DAAC). (The full list of pictures is in data/nasa/SOURCES.json; it could not be loaded here.)</p>
+  </div>
+  <p>NASA imagery and data used here are provided by NASA and used under <a href="https://www.nasa.gov/nasa-brand-center/images-and-media/" target="_blank" rel="noopener">NASA's Media Usage Guidelines</a>. The pictures are copies kept in this project, and none of them is loaded from NASA's server while you use the page. NASA does not endorse this project.</p>
+  <p>The pictures do not update by themselves. 0&nbsp;&deg;C means &ldquo;same as normal&rdquo;; the source page does not state which reference period &ldquo;normal&rdquo; is based on. Values are read from the colours of the picture, so they are approximate, and the colour scale ends at &plusmn;4&nbsp;&deg;C.</p>
   <p>Country names: Natural Earth (public domain), <em>Admin 0 &ndash; Countries</em>, 1:50m, naturalearthdata.com. They are a label layer only: the sound and the values never use them. The place named for the pointer is approximate: a country is named only when it is clearly the closest one, otherwise the continent is named.</p>
   <p>Earth Jukebox is a prototype made for the NASA International Space Apps Challenge 2026. It is not an official NASA website, and NASA does not endorse this project.</p>
   <button id="about-close" class="tool" type="button" autofocus>Close</button>
@@ -1115,37 +1118,37 @@ function whereAmI() {
 // Source: NASA SVS #5176, one frame for the first available day of each month from June 2024, and the latest frame
 // (11 November 2026). NASA publishes these frames only as 4096 x 2048 EXR files, so each one was converted to a
 // 1024 x 512 JPEG picture. The picture shown at the start is the latest frame, which is inside this page; the others
-// are small files in data/frames/ that load when you move the slider. Every frame is read with the same colour table.
+// are small files in data/nasa/sst/frames/ that load when you move the slider. Every frame is read with the same colour table.
 const FRAMES = [
-  ['2024-06-01', 'data/frames/sst_20240601.jpg'],
-  ['2024-07-01', 'data/frames/sst_20240701.jpg'],
-  ['2024-08-01', 'data/frames/sst_20240801.jpg'],
-  ['2024-09-01', 'data/frames/sst_20240901.jpg'],
-  ['2024-10-01', 'data/frames/sst_20241001.jpg'],
-  ['2024-11-01', 'data/frames/sst_20241101.jpg'],
-  ['2024-12-01', 'data/frames/sst_20241201.jpg'],
-  ['2025-01-01', 'data/frames/sst_20250101.jpg'],
-  ['2025-02-01', 'data/frames/sst_20250201.jpg'],
-  ['2025-03-01', 'data/frames/sst_20250301.jpg'],
-  ['2025-04-01', 'data/frames/sst_20250401.jpg'],
-  ['2025-05-01', 'data/frames/sst_20250501.jpg'],
-  ['2025-06-01', 'data/frames/sst_20250601.jpg'],
-  ['2025-07-01', 'data/frames/sst_20250701.jpg'],
-  ['2025-08-01', 'data/frames/sst_20250801.jpg'],
-  ['2025-09-01', 'data/frames/sst_20250901.jpg'],
-  ['2025-10-01', 'data/frames/sst_20251001.jpg'],
-  ['2025-11-01', 'data/frames/sst_20251101.jpg'],
-  ['2025-12-01', 'data/frames/sst_20251201.jpg'],
-  ['2026-01-01', 'data/frames/sst_20260101.jpg'],
-  ['2026-02-01', 'data/frames/sst_20260201.jpg'],
-  ['2026-03-01', 'data/frames/sst_20260301.jpg'],
-  ['2026-04-01', 'data/frames/sst_20260401.jpg'],
-  ['2026-05-01', 'data/frames/sst_20260501.jpg'],
-  ['2026-06-01', 'data/frames/sst_20260601.jpg'],
-  ['2026-07-01', 'data/frames/sst_20260701.jpg'],
-  ['2026-08-01', 'data/frames/sst_20260801.jpg'],
-  ['2026-09-01', 'data/frames/sst_20260901.jpg'],
-  ['2026-10-01', 'data/frames/sst_20261001.jpg'],
+  ['2024-06-01', 'data/nasa/sst/frames/sst_20240601.jpg'],
+  ['2024-07-01', 'data/nasa/sst/frames/sst_20240701.jpg'],
+  ['2024-08-01', 'data/nasa/sst/frames/sst_20240801.jpg'],
+  ['2024-09-01', 'data/nasa/sst/frames/sst_20240901.jpg'],
+  ['2024-10-01', 'data/nasa/sst/frames/sst_20241001.jpg'],
+  ['2024-11-01', 'data/nasa/sst/frames/sst_20241101.jpg'],
+  ['2024-12-01', 'data/nasa/sst/frames/sst_20241201.jpg'],
+  ['2025-01-01', 'data/nasa/sst/frames/sst_20250101.jpg'],
+  ['2025-02-01', 'data/nasa/sst/frames/sst_20250201.jpg'],
+  ['2025-03-01', 'data/nasa/sst/frames/sst_20250301.jpg'],
+  ['2025-04-01', 'data/nasa/sst/frames/sst_20250401.jpg'],
+  ['2025-05-01', 'data/nasa/sst/frames/sst_20250501.jpg'],
+  ['2025-06-01', 'data/nasa/sst/frames/sst_20250601.jpg'],
+  ['2025-07-01', 'data/nasa/sst/frames/sst_20250701.jpg'],
+  ['2025-08-01', 'data/nasa/sst/frames/sst_20250801.jpg'],
+  ['2025-09-01', 'data/nasa/sst/frames/sst_20250901.jpg'],
+  ['2025-10-01', 'data/nasa/sst/frames/sst_20251001.jpg'],
+  ['2025-11-01', 'data/nasa/sst/frames/sst_20251101.jpg'],
+  ['2025-12-01', 'data/nasa/sst/frames/sst_20251201.jpg'],
+  ['2026-01-01', 'data/nasa/sst/frames/sst_20260101.jpg'],
+  ['2026-02-01', 'data/nasa/sst/frames/sst_20260201.jpg'],
+  ['2026-03-01', 'data/nasa/sst/frames/sst_20260301.jpg'],
+  ['2026-04-01', 'data/nasa/sst/frames/sst_20260401.jpg'],
+  ['2026-05-01', 'data/nasa/sst/frames/sst_20260501.jpg'],
+  ['2026-06-01', 'data/nasa/sst/frames/sst_20260601.jpg'],
+  ['2026-07-01', 'data/nasa/sst/frames/sst_20260701.jpg'],
+  ['2026-08-01', 'data/nasa/sst/frames/sst_20260801.jpg'],
+  ['2026-09-01', 'data/nasa/sst/frames/sst_20260901.jpg'],
+  ['2026-10-01', 'data/nasa/sst/frames/sst_20261001.jpg'],
   ['2026-11-11', null],
 ];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -1506,7 +1509,65 @@ document.getElementById('access').addEventListener('click', openLanding);
 
 // ---- "About & sources": the long notes, in a dialog (the page behind it is locked while it is open) ----
 const aboutDlg = document.getElementById('about');
-document.getElementById('about-btn').addEventListener('click', () => aboutDlg.showModal());
+document.getElementById('about-btn').addEventListener('click', () => { aboutDlg.showModal(); loadSources(); });
+
+// The NASA credits come from data/nasa/SOURCES.json, so a picture added to that file is credited here by itself.
+// (If the file cannot be loaded, for example when the page is opened as a plain file, the short credit written in
+// the dialog stays.) The file is a copy in this project: nothing is loaded from NASA's server.
+const aboutSources = document.getElementById('about-sources');
+let sourcesDone = false;
+function niceDate(iso) {
+  const [y, m, d] = iso.split('-');
+  return `${+d} ${MONTHS[+m - 1]} ${y}`;
+}
+function renderSources(doc) {
+  const groups = new Map();  // pictures with the same source and credit are listed together
+  for (const f of doc.files) {
+    const key = `${f.svs_id}|${f.attribution}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(f);
+  }
+  const blocks = [];
+  for (const files of groups.values()) {
+    const f = files[0], c = f.credits || {};
+    const credit = document.createElement('p');
+    credit.append(`${f.attribution}: `);
+    const title = document.createElement('em');
+    title.textContent = f.dataset;
+    const link = document.createElement('a');
+    link.href = f.page;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.textContent = `SVS #${f.svs_id}`;
+    credit.append(title, ' (', link, '). ');
+    const people = [];
+    if (c.visualizer) people.push(`Visualizer: ${c.visualizer}.`);
+    if (c.scientist) people.push(`Scientist: ${c.scientist}.`);
+    if (c.technical_support) people.push(`Technical support: ${c.technical_support.join(', ')}.`);
+    if (f.underlying_data) people.push(`Data: ${f.underlying_data}.`);
+    credit.append(people.join(' '));
+
+    const dates = files.map((x) => x.data_date).filter(Boolean).sort();
+    const got = [...new Set(files.map((x) => x.downloaded).filter(Boolean))].sort();
+    const derived = files.filter((x) => x.kind === 'derived');
+    const what = document.createElement('p');
+    what.textContent = `${files.length} pictures in this project` +
+      (dates.length ? `, data dates ${niceDate(dates[0])} to ${niceDate(dates[dates.length - 1])}` : '') +
+      (got.length ? `, downloaded ${got.map(niceDate).join(' and ')}` : '') + '. ' +
+      (derived.length ? `${derived.length} of them are derived: ${derived[0].processing}` : '');
+    blocks.push(credit, what);
+  }
+  aboutSources.replaceChildren(...blocks);
+}
+async function loadSources() {
+  if (sourcesDone) return;
+  try {
+    const response = await fetch('data/nasa/SOURCES.json');
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    renderSources(await response.json());
+    sourcesDone = true;
+  } catch (e) { /* keep the short credit that is already in the dialog */ }
+}
 document.getElementById('about-close').addEventListener('click', () => aboutDlg.close());
 aboutDlg.addEventListener('click', (e) => { if (e.target === aboutDlg) aboutDlg.close(); });  // a click on the dark backdrop
 

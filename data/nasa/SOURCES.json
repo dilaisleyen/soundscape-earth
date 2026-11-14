@@ -1,0 +1,812 @@
+{
+  "note": "Where every NASA picture in data/nasa/ comes from. The About & sources dialog of the page is built from this file. Entries with fetch=true can be downloaded again with scripts/fetch_nasa_data.py. NASA does not endorse this project.",
+  "media_usage_guidelines": "https://www.nasa.gov/nasa-brand-center/images-and-media/",
+  "files": [
+    {
+      "file": "sst/sst_anomaly.jpg",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005176/sst_mur_anomaly_nodates_most_recent_print.jpg",
+      "kind": "original",
+      "fetch": true,
+      "downloaded": "2026-11-14",
+      "data_date": "2026-11-11",
+      "last_modified": null,
+      "role": "The map picture that opens with the page (also copied inside index.html as base64). Values are read from it.",
+      "note": "Equirectangular, 1024 x 512, no date stamp. It was the most recent frame when downloaded; its date was found by comparing it with the EXR frames of 9, 10 and 11 November 2026.",
+      "svs_id": "5176",
+      "page": "https://svs.gsfc.nasa.gov/5176/",
+      "dataset": "Sea Surface Temperature (SST) Anomaly - Near Real Time",
+      "underlying_data": "JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC; SVS dataset ID 845",
+      "attribution": "NASA's Scientific Visualization Studio",
+      "credits": {
+        "visualizer": "Kel Elkins (USRA)",
+        "scientist": "Atousa Saberi (NASA/GSFC)",
+        "technical_support": [
+          "Laurence Schuler (ADNET Systems, Inc.)",
+          "Ian Jones (ADNET Systems, Inc.)"
+        ]
+      },
+      "bytes": 236829,
+      "sha256": "59f2222c04fc3f6fe8f8670fff50c058f0c2b23e064c7bac2499e2f046a6e58f"
+    },
+    {
+      "file": "sst/sst_colorbar.jpg",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005176/sst_mur_anomaly_auto_colorbar_01_print.jpg",
+      "kind": "original",
+      "fetch": true,
+      "downloaded": "2026-11-14",
+      "data_date": null,
+      "last_modified": "2023-10-16",
+      "role": "NASA's colour bar (-4 to +4 degrees C). The colour table in index.html was read from it.",
+      "note": "A colour scale, not a map of one day.",
+      "svs_id": "5176",
+      "page": "https://svs.gsfc.nasa.gov/5176/",
+      "dataset": "Sea Surface Temperature (SST) Anomaly - Near Real Time",
+      "underlying_data": "JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC; SVS dataset ID 845",
+      "attribution": "NASA's Scientific Visualization Studio",
+      "credits": {
+        "visualizer": "Kel Elkins (USRA)",
+        "scientist": "Atousa Saberi (NASA/GSFC)",
+        "technical_support": [
+          "Laurence Schuler (ADNET Systems, Inc.)",
+          "Ian Jones (ADNET Systems, Inc.)"
+        ]
+      },
+      "bytes": 29771,
+      "sha256": "a999e70fd64d6cf663e0658e2f9419fe718f2c15c7122beb560d812365905445"
+    },
+    {
+      "file": "sst/frames/sst_20240601.jpg",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005176/frames/4096x2048_2x1_30p/sst_mur_anomaly_nodates/sst_mur_anomaly_nodates_20240601.exr",
+      "kind": "derived",
+      "fetch": false,
+      "downloaded": "2026-11-14",
+      "data_date": "2024-06-01",
+      "last_modified": null,
+      "role": "One picture of the time slider.",
+      "processing": "NASA publishes this frame only as a 4096 x 2048 EXR file (the url). It was reduced to 1024 x 512 (average of 4 x 4 pixels), converted to 8-bit colour with the sRGB curve and saved as a JPEG (quality 90). The url is the original, not this file.",
+      "svs_id": "5176",
+      "page": "https://svs.gsfc.nasa.gov/5176/",
+      "dataset": "Sea Surface Temperature (SST) Anomaly - Near Real Time",
+      "underlying_data": "JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC; SVS dataset ID 845",
+      "attribution": "NASA's Scientific Visualization Studio",
+      "credits": {
+        "visualizer": "Kel Elkins (USRA)",
+        "scientist": "Atousa Saberi (NASA/GSFC)",
+        "technical_support": [
+          "Laurence Schuler (ADNET Systems, Inc.)",
+          "Ian Jones (ADNET Systems, Inc.)"
+        ]
+      },
+      "bytes": 242876,
+      "sha256": "b3541fc64ed3743d0d82d11a2fef0419aae65bf176365f82ab250034112ad79d"
+    },
+    {
+      "file": "sst/frames/sst_20240701.jpg",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005176/frames/4096x2048_2x1_30p/sst_mur_anomaly_nodates/sst_mur_anomaly_nodates_20240701.exr",
+      "kind": "derived",
+      "fetch": false,
+      "downloaded": "2026-11-14",
+      "data_date": "2024-07-01",
+      "last_modified": null,
+      "role": "One picture of the time slider.",
+      "processing": "NASA publishes this frame only as a 4096 x 2048 EXR file (the url). It was reduced to 1024 x 512 (average of 4 x 4 pixels), converted to 8-bit colour with the sRGB curve and saved as a JPEG (quality 90). The url is the original, not this file.",
+      "svs_id": "5176",
+      "page": "https://svs.gsfc.nasa.gov/5176/",
+      "dataset": "Sea Surface Temperature (SST) Anomaly - Near Real Time",
+      "underlying_data": "JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC; SVS dataset ID 845",
+      "attribution": "NASA's Scientific Visualization Studio",
+      "credits": {
+        "visualizer": "Kel Elkins (USRA)",
+        "scientist": "Atousa Saberi (NASA/GSFC)",
+        "technical_support": [
+          "Laurence Schuler (ADNET Systems, Inc.)",
+          "Ian Jones (ADNET Systems, Inc.)"
+        ]
+      },
+      "bytes": 245014,
+      "sha256": "7ed618c9f1a6d71f71eefbca9820c2ecc94b1effe075ed7dfa669ae5ec336771"
+    },
+    {
+      "file": "sst/frames/sst_20240801.jpg",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005176/frames/4096x2048_2x1_30p/sst_mur_anomaly_nodates/sst_mur_anomaly_nodates_20240801.exr",
+      "kind": "derived",
+      "fetch": false,
+      "downloaded": "2026-11-14",
+      "data_date": "2024-08-01",
+      "last_modified": null,
+      "role": "One picture of the time slider.",
+      "processing": "NASA publishes this frame only as a 4096 x 2048 EXR file (the url). It was reduced to 1024 x 512 (average of 4 x 4 pixels), converted to 8-bit colour with the sRGB curve and saved as a JPEG (quality 90). The url is the original, not this file.",
+      "svs_id": "5176",
+      "page": "https://svs.gsfc.nasa.gov/5176/",
+      "dataset": "Sea Surface Temperature (SST) Anomaly - Near Real Time",
+      "underlying_data": "JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC; SVS dataset ID 845",
+      "attribution": "NASA's Scientific Visualization Studio",
+      "credits": {
+        "visualizer": "Kel Elkins (USRA)",
+        "scientist": "Atousa Saberi (NASA/GSFC)",
+        "technical_support": [
+          "Laurence Schuler (ADNET Systems, Inc.)",
+          "Ian Jones (ADNET Systems, Inc.)"
+        ]
+      },
+      "bytes": 244398,
+      "sha256": "1026fd9795edf82bf1c2cd3a8a247f019d615ff61a64db0ec3d56da3cac1f7e5"
+    },
+    {
+      "file": "sst/frames/sst_20240901.jpg",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005176/frames/4096x2048_2x1_30p/sst_mur_anomaly_nodates/sst_mur_anomaly_nodates_20240901.exr",
+      "kind": "derived",
+      "fetch": false,
+      "downloaded": "2026-11-14",
+      "data_date": "2024-09-01",
+      "last_modified": null,
+      "role": "One picture of the time slider.",
+      "processing": "NASA publishes this frame only as a 4096 x 2048 EXR file (the url). It was reduced to 1024 x 512 (average of 4 x 4 pixels), converted to 8-bit colour with the sRGB curve and saved as a JPEG (quality 90). The url is the original, not this file.",
+      "svs_id": "5176",
+      "page": "https://svs.gsfc.nasa.gov/5176/",
+      "dataset": "Sea Surface Temperature (SST) Anomaly - Near Real Time",
+      "underlying_data": "JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC; SVS dataset ID 845",
+      "attribution": "NASA's Scientific Visualization Studio",
+      "credits": {
+        "visualizer": "Kel Elkins (USRA)",
+        "scientist": "Atousa Saberi (NASA/GSFC)",
+        "technical_support": [
+          "Laurence Schuler (ADNET Systems, Inc.)",
+          "Ian Jones (ADNET Systems, Inc.)"
+        ]
+      },
+      "bytes": 246843,
+      "sha256": "81bcedf99fb2351c4fd721832bcbafb9c16c12cf845eb30caf1cd14f61a7837f"
+    },
+    {
+      "file": "sst/frames/sst_20241001.jpg",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005176/frames/4096x2048_2x1_30p/sst_mur_anomaly_nodates/sst_mur_anomaly_nodates_20241001.exr",
+      "kind": "derived",
+      "fetch": false,
+      "downloaded": "2026-11-14",
+      "data_date": "2024-10-01",
+      "last_modified": null,
+      "role": "One picture of the time slider.",
+      "processing": "NASA publishes this frame only as a 4096 x 2048 EXR file (the url). It was reduced to 1024 x 512 (average of 4 x 4 pixels), converted to 8-bit colour with the sRGB curve and saved as a JPEG (quality 90). The url is the original, not this file.",
+      "svs_id": "5176",
+      "page": "https://svs.gsfc.nasa.gov/5176/",
+      "dataset": "Sea Surface Temperature (SST) Anomaly - Near Real Time",
+      "underlying_data": "JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC; SVS dataset ID 845",
+      "attribution": "NASA's Scientific Visualization Studio",
+      "credits": {
+        "visualizer": "Kel Elkins (USRA)",
+        "scientist": "Atousa Saberi (NASA/GSFC)",
+        "technical_support": [
+          "Laurence Schuler (ADNET Systems, Inc.)",
+          "Ian Jones (ADNET Systems, Inc.)"
+        ]
+      },
+      "bytes": 238445,
+      "sha256": "446995793e50982c4cccdaded5c867c7afeeb29ace307d8caf6a267e3b66cea6"
+    },
+    {
+      "file": "sst/frames/sst_20241101.jpg",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005176/frames/4096x2048_2x1_30p/sst_mur_anomaly_nodates/sst_mur_anomaly_nodates_20241101.exr",
+      "kind": "derived",
+      "fetch": false,
+      "downloaded": "2026-11-14",
+      "data_date": "2024-11-01",
+      "last_modified": null,
+      "role": "One picture of the time slider.",
+      "processing": "NASA publishes this frame only as a 4096 x 2048 EXR file (the url). It was reduced to 1024 x 512 (average of 4 x 4 pixels), converted to 8-bit colour with the sRGB curve and saved as a JPEG (quality 90). The url is the original, not this file.",
+      "svs_id": "5176",
+      "page": "https://svs.gsfc.nasa.gov/5176/",
+      "dataset": "Sea Surface Temperature (SST) Anomaly - Near Real Time",
+      "underlying_data": "JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC; SVS dataset ID 845",
+      "attribution": "NASA's Scientific Visualization Studio",
+      "credits": {
+        "visualizer": "Kel Elkins (USRA)",
+        "scientist": "Atousa Saberi (NASA/GSFC)",
+        "technical_support": [
+          "Laurence Schuler (ADNET Systems, Inc.)",
+          "Ian Jones (ADNET Systems, Inc.)"
+        ]
+      },
+      "bytes": 241313,
+      "sha256": "6e42c1906b0a6cfc424f3547f07bce7d92beb1e98e934c0d859b1066a013fd35"
+    },
+    {
+      "file": "sst/frames/sst_20241201.jpg",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005176/frames/4096x2048_2x1_30p/sst_mur_anomaly_nodates/sst_mur_anomaly_nodates_20241201.exr",
+      "kind": "derived",
+      "fetch": false,
+      "downloaded": "2026-11-14",
+      "data_date": "2024-12-01",
+      "last_modified": null,
+      "role": "One picture of the time slider.",
+      "processing": "NASA publishes this frame only as a 4096 x 2048 EXR file (the url). It was reduced to 1024 x 512 (average of 4 x 4 pixels), converted to 8-bit colour with the sRGB curve and saved as a JPEG (quality 90). The url is the original, not this file.",
+      "svs_id": "5176",
+      "page": "https://svs.gsfc.nasa.gov/5176/",
+      "dataset": "Sea Surface Temperature (SST) Anomaly - Near Real Time",
+      "underlying_data": "JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC; SVS dataset ID 845",
+      "attribution": "NASA's Scientific Visualization Studio",
+      "credits": {
+        "visualizer": "Kel Elkins (USRA)",
+        "scientist": "Atousa Saberi (NASA/GSFC)",
+        "technical_support": [
+          "Laurence Schuler (ADNET Systems, Inc.)",
+          "Ian Jones (ADNET Systems, Inc.)"
+        ]
+      },
+      "bytes": 241069,
+      "sha256": "2ffa932128a764ccea7fbc3a77fc1ad852b65908251b651428f21f94eb594ed0"
+    },
+    {
+      "file": "sst/frames/sst_20250101.jpg",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005176/frames/4096x2048_2x1_30p/sst_mur_anomaly_nodates/sst_mur_anomaly_nodates_20250101.exr",
+      "kind": "derived",
+      "fetch": false,
+      "downloaded": "2026-11-14",
+      "data_date": "2025-01-01",
+      "last_modified": null,
+      "role": "One picture of the time slider.",
+      "processing": "NASA publishes this frame only as a 4096 x 2048 EXR file (the url). It was reduced to 1024 x 512 (average of 4 x 4 pixels), converted to 8-bit colour with the sRGB curve and saved as a JPEG (quality 90). The url is the original, not this file.",
+      "svs_id": "5176",
+      "page": "https://svs.gsfc.nasa.gov/5176/",
+      "dataset": "Sea Surface Temperature (SST) Anomaly - Near Real Time",
+      "underlying_data": "JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC; SVS dataset ID 845",
+      "attribution": "NASA's Scientific Visualization Studio",
+      "credits": {
+        "visualizer": "Kel Elkins (USRA)",
+        "scientist": "Atousa Saberi (NASA/GSFC)",
+        "technical_support": [
+          "Laurence Schuler (ADNET Systems, Inc.)",
+          "Ian Jones (ADNET Systems, Inc.)"
+        ]
+      },
+      "bytes": 244274,
+      "sha256": "d20764b0b3d8d53ec54eff3beb06d22245907828eb8cebe4a10309a131642ccd"
+    },
+    {
+      "file": "sst/frames/sst_20250201.jpg",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005176/frames/4096x2048_2x1_30p/sst_mur_anomaly_nodates/sst_mur_anomaly_nodates_20250201.exr",
+      "kind": "derived",
+      "fetch": false,
+      "downloaded": "2026-11-14",
+      "data_date": "2025-02-01",
+      "last_modified": null,
+      "role": "One picture of the time slider.",
+      "processing": "NASA publishes this frame only as a 4096 x 2048 EXR file (the url). It was reduced to 1024 x 512 (average of 4 x 4 pixels), converted to 8-bit colour with the sRGB curve and saved as a JPEG (quality 90). The url is the original, not this file.",
+      "svs_id": "5176",
+      "page": "https://svs.gsfc.nasa.gov/5176/",
+      "dataset": "Sea Surface Temperature (SST) Anomaly - Near Real Time",
+      "underlying_data": "JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC; SVS dataset ID 845",
+      "attribution": "NASA's Scientific Visualization Studio",
+      "credits": {
+        "visualizer": "Kel Elkins (USRA)",
+        "scientist": "Atousa Saberi (NASA/GSFC)",
+        "technical_support": [
+          "Laurence Schuler (ADNET Systems, Inc.)",
+          "Ian Jones (ADNET Systems, Inc.)"
+        ]
+      },
+      "bytes": 242507,
+      "sha256": "cc6825060f8de7eae5e966e9baa8ce44ecacc57bdee725b714b08945dd5b82b4"
+    },
+    {
+      "file": "sst/frames/sst_20250301.jpg",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005176/frames/4096x2048_2x1_30p/sst_mur_anomaly_nodates/sst_mur_anomaly_nodates_20250301.exr",
+      "kind": "derived",
+      "fetch": false,
+      "downloaded": "2026-11-14",
+      "data_date": "2025-03-01",
+      "last_modified": null,
+      "role": "One picture of the time slider.",
+      "processing": "NASA publishes this frame only as a 4096 x 2048 EXR file (the url). It was reduced to 1024 x 512 (average of 4 x 4 pixels), converted to 8-bit colour with the sRGB curve and saved as a JPEG (quality 90). The url is the original, not this file.",
+      "svs_id": "5176",
+      "page": "https://svs.gsfc.nasa.gov/5176/",
+      "dataset": "Sea Surface Temperature (SST) Anomaly - Near Real Time",
+      "underlying_data": "JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC; SVS dataset ID 845",
+      "attribution": "NASA's Scientific Visualization Studio",
+      "credits": {
+        "visualizer": "Kel Elkins (USRA)",
+        "scientist": "Atousa Saberi (NASA/GSFC)",
+        "technical_support": [
+          "Laurence Schuler (ADNET Systems, Inc.)",
+          "Ian Jones (ADNET Systems, Inc.)"
+        ]
+      },
+      "bytes": 244005,
+      "sha256": "512740ed8ee35ed55e8a9e5d8f7a948c4afab895bb8a89c2085d55cc3486e7bb"
+    },
+    {
+      "file": "sst/frames/sst_20250401.jpg",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005176/frames/4096x2048_2x1_30p/sst_mur_anomaly_nodates/sst_mur_anomaly_nodates_20250401.exr",
+      "kind": "derived",
+      "fetch": false,
+      "downloaded": "2026-11-14",
+      "data_date": "2025-04-01",
+      "last_modified": null,
+      "role": "One picture of the time slider.",
+      "processing": "NASA publishes this frame only as a 4096 x 2048 EXR file (the url). It was reduced to 1024 x 512 (average of 4 x 4 pixels), converted to 8-bit colour with the sRGB curve and saved as a JPEG (quality 90). The url is the original, not this file.",
+      "svs_id": "5176",
+      "page": "https://svs.gsfc.nasa.gov/5176/",
+      "dataset": "Sea Surface Temperature (SST) Anomaly - Near Real Time",
+      "underlying_data": "JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC; SVS dataset ID 845",
+      "attribution": "NASA's Scientific Visualization Studio",
+      "credits": {
+        "visualizer": "Kel Elkins (USRA)",
+        "scientist": "Atousa Saberi (NASA/GSFC)",
+        "technical_support": [
+          "Laurence Schuler (ADNET Systems, Inc.)",
+          "Ian Jones (ADNET Systems, Inc.)"
+        ]
+      },
+      "bytes": 244423,
+      "sha256": "79c84d3f535912effb4916d18d1938a7920e5d665cba839889e3cc50b5ef1dc3"
+    },
+    {
+      "file": "sst/frames/sst_20250501.jpg",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005176/frames/4096x2048_2x1_30p/sst_mur_anomaly_nodates/sst_mur_anomaly_nodates_20250501.exr",
+      "kind": "derived",
+      "fetch": false,
+      "downloaded": "2026-11-14",
+      "data_date": "2025-05-01",
+      "last_modified": null,
+      "role": "One picture of the time slider.",
+      "processing": "NASA publishes this frame only as a 4096 x 2048 EXR file (the url). It was reduced to 1024 x 512 (average of 4 x 4 pixels), converted to 8-bit colour with the sRGB curve and saved as a JPEG (quality 90). The url is the original, not this file.",
+      "svs_id": "5176",
+      "page": "https://svs.gsfc.nasa.gov/5176/",
+      "dataset": "Sea Surface Temperature (SST) Anomaly - Near Real Time",
+      "underlying_data": "JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC; SVS dataset ID 845",
+      "attribution": "NASA's Scientific Visualization Studio",
+      "credits": {
+        "visualizer": "Kel Elkins (USRA)",
+        "scientist": "Atousa Saberi (NASA/GSFC)",
+        "technical_support": [
+          "Laurence Schuler (ADNET Systems, Inc.)",
+          "Ian Jones (ADNET Systems, Inc.)"
+        ]
+      },
+      "bytes": 243124,
+      "sha256": "dc0bad1f35b83e543ea62f6cb43acad4ef05c0746354ec44401e686c61d9a886"
+    },
+    {
+      "file": "sst/frames/sst_20250601.jpg",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005176/frames/4096x2048_2x1_30p/sst_mur_anomaly_nodates/sst_mur_anomaly_nodates_20250601.exr",
+      "kind": "derived",
+      "fetch": false,
+      "downloaded": "2026-11-14",
+      "data_date": "2025-06-01",
+      "last_modified": null,
+      "role": "One picture of the time slider.",
+      "processing": "NASA publishes this frame only as a 4096 x 2048 EXR file (the url). It was reduced to 1024 x 512 (average of 4 x 4 pixels), converted to 8-bit colour with the sRGB curve and saved as a JPEG (quality 90). The url is the original, not this file.",
+      "svs_id": "5176",
+      "page": "https://svs.gsfc.nasa.gov/5176/",
+      "dataset": "Sea Surface Temperature (SST) Anomaly - Near Real Time",
+      "underlying_data": "JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC; SVS dataset ID 845",
+      "attribution": "NASA's Scientific Visualization Studio",
+      "credits": {
+        "visualizer": "Kel Elkins (USRA)",
+        "scientist": "Atousa Saberi (NASA/GSFC)",
+        "technical_support": [
+          "Laurence Schuler (ADNET Systems, Inc.)",
+          "Ian Jones (ADNET Systems, Inc.)"
+        ]
+      },
+      "bytes": 237859,
+      "sha256": "d0585653e6e63878f921c562fd2419d6e5196d5d3bfb1edd6aa6c8172609ae05"
+    },
+    {
+      "file": "sst/frames/sst_20250701.jpg",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005176/frames/4096x2048_2x1_30p/sst_mur_anomaly_nodates/sst_mur_anomaly_nodates_20250701.exr",
+      "kind": "derived",
+      "fetch": false,
+      "downloaded": "2026-11-14",
+      "data_date": "2025-07-01",
+      "last_modified": null,
+      "role": "One picture of the time slider.",
+      "processing": "NASA publishes this frame only as a 4096 x 2048 EXR file (the url). It was reduced to 1024 x 512 (average of 4 x 4 pixels), converted to 8-bit colour with the sRGB curve and saved as a JPEG (quality 90). The url is the original, not this file.",
+      "svs_id": "5176",
+      "page": "https://svs.gsfc.nasa.gov/5176/",
+      "dataset": "Sea Surface Temperature (SST) Anomaly - Near Real Time",
+      "underlying_data": "JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC; SVS dataset ID 845",
+      "attribution": "NASA's Scientific Visualization Studio",
+      "credits": {
+        "visualizer": "Kel Elkins (USRA)",
+        "scientist": "Atousa Saberi (NASA/GSFC)",
+        "technical_support": [
+          "Laurence Schuler (ADNET Systems, Inc.)",
+          "Ian Jones (ADNET Systems, Inc.)"
+        ]
+      },
+      "bytes": 247289,
+      "sha256": "7461eb668cb84a047f3b3d16792901b5f40651e14457654c01d698d0cdd958c2"
+    },
+    {
+      "file": "sst/frames/sst_20250801.jpg",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005176/frames/4096x2048_2x1_30p/sst_mur_anomaly_nodates/sst_mur_anomaly_nodates_20250801.exr",
+      "kind": "derived",
+      "fetch": false,
+      "downloaded": "2026-11-14",
+      "data_date": "2025-08-01",
+      "last_modified": null,
+      "role": "One picture of the time slider.",
+      "processing": "NASA publishes this frame only as a 4096 x 2048 EXR file (the url). It was reduced to 1024 x 512 (average of 4 x 4 pixels), converted to 8-bit colour with the sRGB curve and saved as a JPEG (quality 90). The url is the original, not this file.",
+      "svs_id": "5176",
+      "page": "https://svs.gsfc.nasa.gov/5176/",
+      "dataset": "Sea Surface Temperature (SST) Anomaly - Near Real Time",
+      "underlying_data": "JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC; SVS dataset ID 845",
+      "attribution": "NASA's Scientific Visualization Studio",
+      "credits": {
+        "visualizer": "Kel Elkins (USRA)",
+        "scientist": "Atousa Saberi (NASA/GSFC)",
+        "technical_support": [
+          "Laurence Schuler (ADNET Systems, Inc.)",
+          "Ian Jones (ADNET Systems, Inc.)"
+        ]
+      },
+      "bytes": 248058,
+      "sha256": "317a1a20491014db7ae92b725c15588d5cfbfb7b6694562762232a9250d4ed71"
+    },
+    {
+      "file": "sst/frames/sst_20250901.jpg",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005176/frames/4096x2048_2x1_30p/sst_mur_anomaly_nodates/sst_mur_anomaly_nodates_20250901.exr",
+      "kind": "derived",
+      "fetch": false,
+      "downloaded": "2026-11-14",
+      "data_date": "2025-09-01",
+      "last_modified": null,
+      "role": "One picture of the time slider.",
+      "processing": "NASA publishes this frame only as a 4096 x 2048 EXR file (the url). It was reduced to 1024 x 512 (average of 4 x 4 pixels), converted to 8-bit colour with the sRGB curve and saved as a JPEG (quality 90). The url is the original, not this file.",
+      "svs_id": "5176",
+      "page": "https://svs.gsfc.nasa.gov/5176/",
+      "dataset": "Sea Surface Temperature (SST) Anomaly - Near Real Time",
+      "underlying_data": "JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC; SVS dataset ID 845",
+      "attribution": "NASA's Scientific Visualization Studio",
+      "credits": {
+        "visualizer": "Kel Elkins (USRA)",
+        "scientist": "Atousa Saberi (NASA/GSFC)",
+        "technical_support": [
+          "Laurence Schuler (ADNET Systems, Inc.)",
+          "Ian Jones (ADNET Systems, Inc.)"
+        ]
+      },
+      "bytes": 249895,
+      "sha256": "4e45b0307a03cf8d4329d51909901f9fd4062e6b06da6c4df46bd8a2c6d01572"
+    },
+    {
+      "file": "sst/frames/sst_20251001.jpg",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005176/frames/4096x2048_2x1_30p/sst_mur_anomaly_nodates/sst_mur_anomaly_nodates_20251001.exr",
+      "kind": "derived",
+      "fetch": false,
+      "downloaded": "2026-11-14",
+      "data_date": "2025-10-01",
+      "last_modified": null,
+      "role": "One picture of the time slider.",
+      "processing": "NASA publishes this frame only as a 4096 x 2048 EXR file (the url). It was reduced to 1024 x 512 (average of 4 x 4 pixels), converted to 8-bit colour with the sRGB curve and saved as a JPEG (quality 90). The url is the original, not this file.",
+      "svs_id": "5176",
+      "page": "https://svs.gsfc.nasa.gov/5176/",
+      "dataset": "Sea Surface Temperature (SST) Anomaly - Near Real Time",
+      "underlying_data": "JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC; SVS dataset ID 845",
+      "attribution": "NASA's Scientific Visualization Studio",
+      "credits": {
+        "visualizer": "Kel Elkins (USRA)",
+        "scientist": "Atousa Saberi (NASA/GSFC)",
+        "technical_support": [
+          "Laurence Schuler (ADNET Systems, Inc.)",
+          "Ian Jones (ADNET Systems, Inc.)"
+        ]
+      },
+      "bytes": 251652,
+      "sha256": "e933695e1ce652901c35a5f718b98ce3b9bea9830f7fff323bc482d00446e939"
+    },
+    {
+      "file": "sst/frames/sst_20251101.jpg",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005176/frames/4096x2048_2x1_30p/sst_mur_anomaly_nodates/sst_mur_anomaly_nodates_20251101.exr",
+      "kind": "derived",
+      "fetch": false,
+      "downloaded": "2026-11-14",
+      "data_date": "2025-11-01",
+      "last_modified": null,
+      "role": "One picture of the time slider.",
+      "processing": "NASA publishes this frame only as a 4096 x 2048 EXR file (the url). It was reduced to 1024 x 512 (average of 4 x 4 pixels), converted to 8-bit colour with the sRGB curve and saved as a JPEG (quality 90). The url is the original, not this file.",
+      "svs_id": "5176",
+      "page": "https://svs.gsfc.nasa.gov/5176/",
+      "dataset": "Sea Surface Temperature (SST) Anomaly - Near Real Time",
+      "underlying_data": "JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC; SVS dataset ID 845",
+      "attribution": "NASA's Scientific Visualization Studio",
+      "credits": {
+        "visualizer": "Kel Elkins (USRA)",
+        "scientist": "Atousa Saberi (NASA/GSFC)",
+        "technical_support": [
+          "Laurence Schuler (ADNET Systems, Inc.)",
+          "Ian Jones (ADNET Systems, Inc.)"
+        ]
+      },
+      "bytes": 247738,
+      "sha256": "ed3710562720a32885ce10d11d077c23bc928bedbec6d351bb7ccd46e7297066"
+    },
+    {
+      "file": "sst/frames/sst_20251201.jpg",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005176/frames/4096x2048_2x1_30p/sst_mur_anomaly_nodates/sst_mur_anomaly_nodates_20251201.exr",
+      "kind": "derived",
+      "fetch": false,
+      "downloaded": "2026-11-14",
+      "data_date": "2025-12-01",
+      "last_modified": null,
+      "role": "One picture of the time slider.",
+      "processing": "NASA publishes this frame only as a 4096 x 2048 EXR file (the url). It was reduced to 1024 x 512 (average of 4 x 4 pixels), converted to 8-bit colour with the sRGB curve and saved as a JPEG (quality 90). The url is the original, not this file.",
+      "svs_id": "5176",
+      "page": "https://svs.gsfc.nasa.gov/5176/",
+      "dataset": "Sea Surface Temperature (SST) Anomaly - Near Real Time",
+      "underlying_data": "JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC; SVS dataset ID 845",
+      "attribution": "NASA's Scientific Visualization Studio",
+      "credits": {
+        "visualizer": "Kel Elkins (USRA)",
+        "scientist": "Atousa Saberi (NASA/GSFC)",
+        "technical_support": [
+          "Laurence Schuler (ADNET Systems, Inc.)",
+          "Ian Jones (ADNET Systems, Inc.)"
+        ]
+      },
+      "bytes": 238401,
+      "sha256": "1397c1ace019548bd16219e7724e054bc745ee41788bc2961e764116b1548e42"
+    },
+    {
+      "file": "sst/frames/sst_20260101.jpg",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005176/frames/4096x2048_2x1_30p/sst_mur_anomaly_nodates/sst_mur_anomaly_nodates_20260101.exr",
+      "kind": "derived",
+      "fetch": false,
+      "downloaded": "2026-11-14",
+      "data_date": "2026-01-01",
+      "last_modified": null,
+      "role": "One picture of the time slider.",
+      "processing": "NASA publishes this frame only as a 4096 x 2048 EXR file (the url). It was reduced to 1024 x 512 (average of 4 x 4 pixels), converted to 8-bit colour with the sRGB curve and saved as a JPEG (quality 90). The url is the original, not this file.",
+      "svs_id": "5176",
+      "page": "https://svs.gsfc.nasa.gov/5176/",
+      "dataset": "Sea Surface Temperature (SST) Anomaly - Near Real Time",
+      "underlying_data": "JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC; SVS dataset ID 845",
+      "attribution": "NASA's Scientific Visualization Studio",
+      "credits": {
+        "visualizer": "Kel Elkins (USRA)",
+        "scientist": "Atousa Saberi (NASA/GSFC)",
+        "technical_support": [
+          "Laurence Schuler (ADNET Systems, Inc.)",
+          "Ian Jones (ADNET Systems, Inc.)"
+        ]
+      },
+      "bytes": 238868,
+      "sha256": "ddafc95504f010bff12ad553e04c1a8bdd0234ddfeb042d9460c299ea1137aac"
+    },
+    {
+      "file": "sst/frames/sst_20260201.jpg",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005176/frames/4096x2048_2x1_30p/sst_mur_anomaly_nodates/sst_mur_anomaly_nodates_20260201.exr",
+      "kind": "derived",
+      "fetch": false,
+      "downloaded": "2026-11-14",
+      "data_date": "2026-02-01",
+      "last_modified": null,
+      "role": "One picture of the time slider.",
+      "processing": "NASA publishes this frame only as a 4096 x 2048 EXR file (the url). It was reduced to 1024 x 512 (average of 4 x 4 pixels), converted to 8-bit colour with the sRGB curve and saved as a JPEG (quality 90). The url is the original, not this file.",
+      "svs_id": "5176",
+      "page": "https://svs.gsfc.nasa.gov/5176/",
+      "dataset": "Sea Surface Temperature (SST) Anomaly - Near Real Time",
+      "underlying_data": "JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC; SVS dataset ID 845",
+      "attribution": "NASA's Scientific Visualization Studio",
+      "credits": {
+        "visualizer": "Kel Elkins (USRA)",
+        "scientist": "Atousa Saberi (NASA/GSFC)",
+        "technical_support": [
+          "Laurence Schuler (ADNET Systems, Inc.)",
+          "Ian Jones (ADNET Systems, Inc.)"
+        ]
+      },
+      "bytes": 245852,
+      "sha256": "590af878765709877cc8a14f6195d48d2d2f9fda1d3018ef241dac7f4d76f887"
+    },
+    {
+      "file": "sst/frames/sst_20260301.jpg",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005176/frames/4096x2048_2x1_30p/sst_mur_anomaly_nodates/sst_mur_anomaly_nodates_20260301.exr",
+      "kind": "derived",
+      "fetch": false,
+      "downloaded": "2026-11-14",
+      "data_date": "2026-03-01",
+      "last_modified": null,
+      "role": "One picture of the time slider.",
+      "processing": "NASA publishes this frame only as a 4096 x 2048 EXR file (the url). It was reduced to 1024 x 512 (average of 4 x 4 pixels), converted to 8-bit colour with the sRGB curve and saved as a JPEG (quality 90). The url is the original, not this file.",
+      "svs_id": "5176",
+      "page": "https://svs.gsfc.nasa.gov/5176/",
+      "dataset": "Sea Surface Temperature (SST) Anomaly - Near Real Time",
+      "underlying_data": "JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC; SVS dataset ID 845",
+      "attribution": "NASA's Scientific Visualization Studio",
+      "credits": {
+        "visualizer": "Kel Elkins (USRA)",
+        "scientist": "Atousa Saberi (NASA/GSFC)",
+        "technical_support": [
+          "Laurence Schuler (ADNET Systems, Inc.)",
+          "Ian Jones (ADNET Systems, Inc.)"
+        ]
+      },
+      "bytes": 244652,
+      "sha256": "378f873af52ae2402248e60b7a57e30240b00f05c810944459d005dc306f3372"
+    },
+    {
+      "file": "sst/frames/sst_20260401.jpg",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005176/frames/4096x2048_2x1_30p/sst_mur_anomaly_nodates/sst_mur_anomaly_nodates_20260401.exr",
+      "kind": "derived",
+      "fetch": false,
+      "downloaded": "2026-11-14",
+      "data_date": "2026-04-01",
+      "last_modified": null,
+      "role": "One picture of the time slider.",
+      "processing": "NASA publishes this frame only as a 4096 x 2048 EXR file (the url). It was reduced to 1024 x 512 (average of 4 x 4 pixels), converted to 8-bit colour with the sRGB curve and saved as a JPEG (quality 90). The url is the original, not this file.",
+      "svs_id": "5176",
+      "page": "https://svs.gsfc.nasa.gov/5176/",
+      "dataset": "Sea Surface Temperature (SST) Anomaly - Near Real Time",
+      "underlying_data": "JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC; SVS dataset ID 845",
+      "attribution": "NASA's Scientific Visualization Studio",
+      "credits": {
+        "visualizer": "Kel Elkins (USRA)",
+        "scientist": "Atousa Saberi (NASA/GSFC)",
+        "technical_support": [
+          "Laurence Schuler (ADNET Systems, Inc.)",
+          "Ian Jones (ADNET Systems, Inc.)"
+        ]
+      },
+      "bytes": 244174,
+      "sha256": "6df2b9dc8b3eb98ebd32d0313a80e0d6996994dca019bf37785e0b523f62af95"
+    },
+    {
+      "file": "sst/frames/sst_20260501.jpg",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005176/frames/4096x2048_2x1_30p/sst_mur_anomaly_nodates/sst_mur_anomaly_nodates_20260501.exr",
+      "kind": "derived",
+      "fetch": false,
+      "downloaded": "2026-11-14",
+      "data_date": "2026-05-01",
+      "last_modified": null,
+      "role": "One picture of the time slider.",
+      "processing": "NASA publishes this frame only as a 4096 x 2048 EXR file (the url). It was reduced to 1024 x 512 (average of 4 x 4 pixels), converted to 8-bit colour with the sRGB curve and saved as a JPEG (quality 90). The url is the original, not this file.",
+      "svs_id": "5176",
+      "page": "https://svs.gsfc.nasa.gov/5176/",
+      "dataset": "Sea Surface Temperature (SST) Anomaly - Near Real Time",
+      "underlying_data": "JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC; SVS dataset ID 845",
+      "attribution": "NASA's Scientific Visualization Studio",
+      "credits": {
+        "visualizer": "Kel Elkins (USRA)",
+        "scientist": "Atousa Saberi (NASA/GSFC)",
+        "technical_support": [
+          "Laurence Schuler (ADNET Systems, Inc.)",
+          "Ian Jones (ADNET Systems, Inc.)"
+        ]
+      },
+      "bytes": 242747,
+      "sha256": "e5efac40b0183a53d6a672e88a5534339a15916edeec400f81f0e8b621f363bf"
+    },
+    {
+      "file": "sst/frames/sst_20260601.jpg",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005176/frames/4096x2048_2x1_30p/sst_mur_anomaly_nodates/sst_mur_anomaly_nodates_20260601.exr",
+      "kind": "derived",
+      "fetch": false,
+      "downloaded": "2026-11-14",
+      "data_date": "2026-06-01",
+      "last_modified": null,
+      "role": "One picture of the time slider.",
+      "processing": "NASA publishes this frame only as a 4096 x 2048 EXR file (the url). It was reduced to 1024 x 512 (average of 4 x 4 pixels), converted to 8-bit colour with the sRGB curve and saved as a JPEG (quality 90). The url is the original, not this file.",
+      "svs_id": "5176",
+      "page": "https://svs.gsfc.nasa.gov/5176/",
+      "dataset": "Sea Surface Temperature (SST) Anomaly - Near Real Time",
+      "underlying_data": "JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC; SVS dataset ID 845",
+      "attribution": "NASA's Scientific Visualization Studio",
+      "credits": {
+        "visualizer": "Kel Elkins (USRA)",
+        "scientist": "Atousa Saberi (NASA/GSFC)",
+        "technical_support": [
+          "Laurence Schuler (ADNET Systems, Inc.)",
+          "Ian Jones (ADNET Systems, Inc.)"
+        ]
+      },
+      "bytes": 245163,
+      "sha256": "3ad3796ac5ad33a1d010d27c04ab8487c98d2a1be1be2622b3d30f3e1db71196"
+    },
+    {
+      "file": "sst/frames/sst_20260701.jpg",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005176/frames/4096x2048_2x1_30p/sst_mur_anomaly_nodates/sst_mur_anomaly_nodates_20260701.exr",
+      "kind": "derived",
+      "fetch": false,
+      "downloaded": "2026-11-14",
+      "data_date": "2026-07-01",
+      "last_modified": null,
+      "role": "One picture of the time slider.",
+      "processing": "NASA publishes this frame only as a 4096 x 2048 EXR file (the url). It was reduced to 1024 x 512 (average of 4 x 4 pixels), converted to 8-bit colour with the sRGB curve and saved as a JPEG (quality 90). The url is the original, not this file.",
+      "svs_id": "5176",
+      "page": "https://svs.gsfc.nasa.gov/5176/",
+      "dataset": "Sea Surface Temperature (SST) Anomaly - Near Real Time",
+      "underlying_data": "JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC; SVS dataset ID 845",
+      "attribution": "NASA's Scientific Visualization Studio",
+      "credits": {
+        "visualizer": "Kel Elkins (USRA)",
+        "scientist": "Atousa Saberi (NASA/GSFC)",
+        "technical_support": [
+          "Laurence Schuler (ADNET Systems, Inc.)",
+          "Ian Jones (ADNET Systems, Inc.)"
+        ]
+      },
+      "bytes": 243507,
+      "sha256": "c25e518ca8fb1f4d653b5f002d850fac251ddb7e8057e34cef2432dee3816643"
+    },
+    {
+      "file": "sst/frames/sst_20260801.jpg",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005176/frames/4096x2048_2x1_30p/sst_mur_anomaly_nodates/sst_mur_anomaly_nodates_20260801.exr",
+      "kind": "derived",
+      "fetch": false,
+      "downloaded": "2026-11-14",
+      "data_date": "2026-08-01",
+      "last_modified": null,
+      "role": "One picture of the time slider.",
+      "processing": "NASA publishes this frame only as a 4096 x 2048 EXR file (the url). It was reduced to 1024 x 512 (average of 4 x 4 pixels), converted to 8-bit colour with the sRGB curve and saved as a JPEG (quality 90). The url is the original, not this file.",
+      "svs_id": "5176",
+      "page": "https://svs.gsfc.nasa.gov/5176/",
+      "dataset": "Sea Surface Temperature (SST) Anomaly - Near Real Time",
+      "underlying_data": "JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC; SVS dataset ID 845",
+      "attribution": "NASA's Scientific Visualization Studio",
+      "credits": {
+        "visualizer": "Kel Elkins (USRA)",
+        "scientist": "Atousa Saberi (NASA/GSFC)",
+        "technical_support": [
+          "Laurence Schuler (ADNET Systems, Inc.)",
+          "Ian Jones (ADNET Systems, Inc.)"
+        ]
+      },
+      "bytes": 240055,
+      "sha256": "02e0e397ec734bebceabc63f92970c6cc78d2b18dc5245c112e3bfb03cd00141"
+    },
+    {
+      "file": "sst/frames/sst_20260901.jpg",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005176/frames/4096x2048_2x1_30p/sst_mur_anomaly_nodates/sst_mur_anomaly_nodates_20260901.exr",
+      "kind": "derived",
+      "fetch": false,
+      "downloaded": "2026-11-14",
+      "data_date": "2026-09-01",
+      "last_modified": null,
+      "role": "One picture of the time slider.",
+      "processing": "NASA publishes this frame only as a 4096 x 2048 EXR file (the url). It was reduced to 1024 x 512 (average of 4 x 4 pixels), converted to 8-bit colour with the sRGB curve and saved as a JPEG (quality 90). The url is the original, not this file.",
+      "svs_id": "5176",
+      "page": "https://svs.gsfc.nasa.gov/5176/",
+      "dataset": "Sea Surface Temperature (SST) Anomaly - Near Real Time",
+      "underlying_data": "JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC; SVS dataset ID 845",
+      "attribution": "NASA's Scientific Visualization Studio",
+      "credits": {
+        "visualizer": "Kel Elkins (USRA)",
+        "scientist": "Atousa Saberi (NASA/GSFC)",
+        "technical_support": [
+          "Laurence Schuler (ADNET Systems, Inc.)",
+          "Ian Jones (ADNET Systems, Inc.)"
+        ]
+      },
+      "bytes": 243266,
+      "sha256": "6ae289d3d26d8fabe3a11567f517415ce3cb974c3382f30288fc155269190f66"
+    },
+    {
+      "file": "sst/frames/sst_20261001.jpg",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005176/frames/4096x2048_2x1_30p/sst_mur_anomaly_nodates/sst_mur_anomaly_nodates_20261001.exr",
+      "kind": "derived",
+      "fetch": false,
+      "downloaded": "2026-11-14",
+      "data_date": "2026-10-01",
+      "last_modified": null,
+      "role": "One picture of the time slider.",
+      "processing": "NASA publishes this frame only as a 4096 x 2048 EXR file (the url). It was reduced to 1024 x 512 (average of 4 x 4 pixels), converted to 8-bit colour with the sRGB curve and saved as a JPEG (quality 90). The url is the original, not this file.",
+      "svs_id": "5176",
+      "page": "https://svs.gsfc.nasa.gov/5176/",
+      "dataset": "Sea Surface Temperature (SST) Anomaly - Near Real Time",
+      "underlying_data": "JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC; SVS dataset ID 845",
+      "attribution": "NASA's Scientific Visualization Studio",
+      "credits": {
+        "visualizer": "Kel Elkins (USRA)",
+        "scientist": "Atousa Saberi (NASA/GSFC)",
+        "technical_support": [
+          "Laurence Schuler (ADNET Systems, Inc.)",
+          "Ian Jones (ADNET Systems, Inc.)"
+        ]
+      },
+      "bytes": 237482,
+      "sha256": "0d40a4a76e5af0ef256143114dfcd3f0ce884753d93671375bf77ba2a5459340"
+    }
+  ]
+}

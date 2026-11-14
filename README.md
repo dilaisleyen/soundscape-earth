@@ -73,8 +73,8 @@ Buttons, zoom and the change between the two screens answer with very soft notes
 
 ## Data and accuracy
 
-- Map: NASA's Scientific Visualization Studio, *Sea Surface Temperature (SST) Anomaly - Near Real Time*, SVS #5176 (the version without date stamps, equirectangular, 1024 x 512). The picture is kept as a copy in this project: the map opens on the most recent frame that was available when it was downloaded, on 14 November 2026 (it is the frame of 11 November 2026; we checked this by comparing it with NASA's frames of 9, 10 and 11 November), and it does **not** update by itself. The copy is also in `data/`.
-- Time slider frames: NASA publishes the frames of this series only as 4096 x 2048 EXR files (half-float, ZIP compressed). For the slider we downloaded the first available frame of each month from June 2024 to October 2026, reduced each one to 1024 x 512 (average of 4 x 4 pixels), converted it to 8-bit colour with the standard sRGB curve and saved it as a JPEG in `data/frames/` (about 240 KB each, 7 MB in all). The conversion reproduces NASA's colour bar to within 0.5 of 255 on average, and the 11 November frame read with our colour table differs from NASA's own 1024 x 512 picture by 0.06 °C on average (98.7% of ocean pixels within 0.25 °C). The JPEG compression itself adds about the same 0.06 °C, as it does for NASA's picture, so differences smaller than about 0.1 °C should not be read as real. The frames are loaded from the page's own web address, so the slider works on the hosted page or a local web server; opened as a plain file, the browser does not let a page read the pixels of other files, and the slider is switched off with a note (the rest of the page works).
+- Map: NASA's Scientific Visualization Studio, *Sea Surface Temperature (SST) Anomaly - Near Real Time*, SVS #5176 (the version without date stamps, equirectangular, 1024 x 512). The picture is kept as a copy in this project: the map opens on the most recent frame that was available when it was downloaded, on 14 November 2026 (it is the frame of 11 November 2026; we checked this by comparing it with NASA's frames of 9, 10 and 11 November), and it does **not** update by itself. The copy is also in `data/nasa/sst/`.
+- Time slider frames: NASA publishes the frames of this series only as 4096 x 2048 EXR files (half-float, ZIP compressed). For the slider we downloaded the first available frame of each month from June 2024 to October 2026, reduced each one to 1024 x 512 (average of 4 x 4 pixels), converted it to 8-bit colour with the standard sRGB curve and saved it as a JPEG in `data/nasa/sst/frames/` (about 240 KB each, 7 MB in all). The conversion reproduces NASA's colour bar to within 0.5 of 255 on average, and the 11 November frame read with our colour table differs from NASA's own 1024 x 512 picture by 0.06 °C on average (98.7% of ocean pixels within 0.25 °C). The JPEG compression itself adds about the same 0.06 °C, as it does for NASA's picture, so differences smaller than about 0.1 °C should not be read as real. The frames are loaded from the page's own web address, so the slider works on the hosted page or a local web server; opened as a plain file, the browser does not let a page read the pixels of other files, and the slider is switched off with a note (the rest of the page works).
 - The values are **read back from the colours** of the picture, not from the original data files. We checked the conversion against NASA's colour bar: across the whole scale the average error is 0.012 °C and the largest 0.052 °C. The picture itself adds more uncertainty (image compression, blending at coasts), so treat values as approximate.
 - The colour scale ends at -4 °C and +4 °C; anything beyond is shown as the end of the scale.
 - 0 °C means "same as normal". The source page does not state which reference period "normal" is based on, so we do not claim one.
@@ -95,10 +95,21 @@ For a local web server: `python -m http.server`, then open `http://localhost:800
 - The frames for the time slider were prepared once, offline, with Python (NumPy and Pillow). None of that is part of the page.
 - No other libraries, fonts, images, sound files or external services are used. No NASA logo is used.
 
+## Data & image credits
+
+All NASA pictures live in `data/nasa/`, and `data/nasa/SOURCES.json` lists every file with its original URL, download date, data date, SVS ID, dataset name, the credit NASA asks for and the people credited. The "About & sources" dialog of the page is built from that file. `scripts/fetch_nasa_data.py` (Python standard library only) downloads the files again and updates the size, checksum and date in `SOURCES.json`. The pictures are copies kept in this project because NASA's server does not send CORS headers, so a page cannot read the pixels of a picture loaded straight from it.
+
+- **NASA's Scientific Visualization Studio**, *Sea Surface Temperature (SST) Anomaly - Near Real Time*, SVS #5176, https://svs.gsfc.nasa.gov/5176/
+  - Visualizer: Kel Elkins (USRA). Scientist: Atousa Saberi (NASA/GSFC). Technical support: Laurence Schuler and Ian Jones (ADNET Systems, Inc.).
+  - Underlying data: JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC; SVS dataset ID 845.
+  - In this project (31 files): the map picture of 11 November 2026 and NASA's colour bar (both as downloaded on 14 November 2026), and 29 time slider pictures (the first available day of each month from June 2024 to October 2026) that we converted from NASA's EXR frames.
+- **Natural Earth** (public domain), *Admin 0 - Countries*, 1:50m, https://www.naturalearthdata.com/ (used for the country names only; a reduced copy is inside `index.html`).
 ## AI use
 
 The code in this project was written with the help of an AI assistant (Claude, by Anthropic), working from the team's instructions. The project idea, the sound design (what each kind of place should sound like and feel like) and the decisions about the interface were made by the team.
 
 ## License
 
-NASA's visualization is credited to NASA's Scientific Visualization Studio. All other code in this project is by the Earth Jukebox team.
+All code in this project is by the Earth Jukebox team.
+
+NASA imagery and data in `data/nasa/` are not covered by this license. They are provided by NASA and used under [NASA's Media Usage Guidelines](https://www.nasa.gov/nasa-brand-center/images-and-media/). NASA does not endorse this project.
