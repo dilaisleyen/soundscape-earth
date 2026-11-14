@@ -38,6 +38,14 @@
 
   /* The map: a framed 2:1 stage. Two canvases and the zoom buttons sit on top of each other inside it. */
   #frame { border:1px solid var(--line); border-radius:16px; overflow:hidden; background:#000; box-shadow:0 20px 60px rgba(0,0,0,.5); }
+  /* The time slider under the map: one picture per month, plus the latest */
+  #timebar { display:flex; align-items:center; gap:10px; margin-top:8px; min-height:40px; }
+  #timebar label { font-weight:600; font-size:15px; }
+  #time { flex:1; min-width:0; height:32px; accent-color:var(--gold); cursor:pointer; }
+  #time-date { min-width:6.5em; text-align:right; font-weight:600; font-variant-numeric:tabular-nums; color:var(--gold); }
+  #time-status { color:var(--muted); font-size:13px; }
+  #time-status:empty { display:none; }
+  #time:disabled { cursor:not-allowed; opacity:.5; }
   #stage { position:relative; width:100%; aspect-ratio:2 / 1; }
   #stage canvas { position:absolute; inset:0; width:100%; height:100%; display:block; }
   #map { cursor:crosshair; touch-action:none; }
@@ -112,7 +120,8 @@
     header { grid-column:1 / -1; margin:0; }
     h1 { font-size:24px; }
     .tool { min-height:38px; padding:6px 14px; font-size:15px; }
-    #mapcol { grid-column:1; grid-row:2; min-width:0; min-height:0; container-type:size; display:grid; place-items:center; }
+    #mapcol { grid-column:1; grid-row:2; min-width:0; min-height:0; display:grid; grid-template-rows:minmax(0, 1fr) auto; row-gap:8px; }
+    #mapfit { min-width:0; min-height:0; container-type:size; display:grid; place-items:center; }
     #frame { width:min(100cqw, 200cqh); }
     #side { grid-column:2; grid-row:2; overflow:auto; }
     #source { grid-column:1 / -1; grid-row:3; margin:0; }
@@ -138,6 +147,8 @@
     .sub { display:none; }
     #zoombar button { width:40px; height:40px; }
     .tool { font-size:14px; padding:8px 10px; min-height:40px; }  /* the three header buttons fit in one row */
+    #timebar { flex-wrap:wrap; gap:4px 10px; }
+    #time-status { flex-basis:100%; }
   }
   @media (max-width: 359px) {
     .readout { grid-template-columns:auto auto; }
@@ -187,6 +198,7 @@
 </header>
 
 <div id="mapcol">
+  <div id="mapfit">
   <div id="frame">
     <div id="stage">
       <canvas id="map" tabindex="0" role="application"
@@ -202,6 +214,13 @@
       </div>
       <div id="zoomlabel" aria-hidden="true">Whole map</div>
     </div>
+  </div>
+  </div>
+  <div id="timebar">
+    <label for="time">Time</label>
+    <input id="time" type="range" min="0" max="29" step="1" value="29" aria-valuetext="11 Nov 2026">
+    <output id="time-date" for="time">11 Nov 2026</output>
+    <span id="time-status"></span>
   </div>
 </div>
 
@@ -239,7 +258,7 @@
 <dialog id="about" aria-labelledby="about-title">
   <h2 id="about-title">About &amp; sources</h2>
   <p>Map: NASA's Scientific Visualization Studio, <em>Sea Surface Temperature (SST) Anomaly &ndash; Near Real Time</em> (SVS #5176). Visualizer: Kel Elkins (USRA). Scientist: Atousa Saberi (NASA/GSFC). Data: JPL MUR SST analysis (PO.DAAC).</p>
-  <p>This page shows the most recent frame that was available when it was downloaded, on 14 November 2026; it does not update by itself. 0&nbsp;&deg;C means &ldquo;same as normal&rdquo;; the source page does not state which reference period &ldquo;normal&rdquo; is based on. Values are read from the colours of the picture, so they are approximate, and the colour scale ends at &plusmn;4&nbsp;&deg;C.</p>
+  <p>The map opens on the most recent frame that was available when the page was made (11 November 2026, downloaded on 14 November 2026); it does not update by itself. The time slider shows one frame for the first available day of each month from June 2024, from the same NASA series. NASA publishes these frames only as 4096 &times; 2048 EXR files, so each one was converted to a 1024 &times; 512 JPEG picture and is read with the same colour table. 0&nbsp;&deg;C means &ldquo;same as normal&rdquo;; the source page does not state which reference period &ldquo;normal&rdquo; is based on. Values are read from the colours of the picture, so they are approximate, and the colour scale ends at &plusmn;4&nbsp;&deg;C.</p>
   <p>Country names: Natural Earth (public domain), <em>Admin 0 &ndash; Countries</em>, 1:50m, naturalearthdata.com. They are a label layer only: the sound and the values never use them. The place named for the pointer is approximate: a country is named only when it is clearly the closest one, otherwise the continent is named.</p>
   <p>Earth Jukebox is a prototype made for the NASA International Space Apps Challenge 2026. It is not an official NASA website, and NASA does not endorse this project.</p>
   <button id="about-close" class="tool" type="button" autofocus>Close</button>
@@ -858,7 +877,7 @@ function setPin(value) {  // the white triangle above the colour scale
 }
 
 // ---- One function for every way of pointing at the map (mouse, finger or keyboard) ----
-function probe(x, y, announceIt) {
+function probe(x, y, announceIt, quiet) {  // quiet: update the readout only, without touching the sound
   x = Math.max(0, Math.min(MAP_W - 1, Math.floor(x)));
   y = Math.max(0, Math.min(MAP_H - 1, Math.floor(y)));
   cursor.x = x;
@@ -869,7 +888,7 @@ function probe(x, y, announceIt) {
   // flat map: left edge = -180°, right edge = +180°, top = 90°N, bottom = 90°S
   const lon = x / MAP_W * 360 - 180;
   const lat = 90 - y / MAP_H * 180;
-  updateSound(result, lon);
+  if (!quiet) updateSound(result, lon);
 
   const place = placeName(result.type, lat, lon);
   rPlace.textContent = place;
@@ -1091,6 +1110,109 @@ function whereAmI() {
   announce(`${describe(result, place)}. Latitude ${Math.abs(lat).toFixed(0)} degrees ${lat >= 0 ? 'north' : 'south'}, ` +
            `longitude ${Math.abs(lon).toFixed(0)} degrees ${lon >= 0 ? 'east' : 'west'}.`);
 }
+
+// ---- Time slider: one picture per month, plus the latest ----
+// Source: NASA SVS #5176, one frame for the first available day of each month from June 2024, and the latest frame
+// (11 November 2026). NASA publishes these frames only as 4096 x 2048 EXR files, so each one was converted to a
+// 1024 x 512 JPEG picture. The picture shown at the start is the latest frame, which is inside this page; the others
+// are small files in data/frames/ that load when you move the slider. Every frame is read with the same colour table.
+const FRAMES = [
+  ['2024-06-01', 'data/frames/sst_20240601.jpg'],
+  ['2024-07-01', 'data/frames/sst_20240701.jpg'],
+  ['2024-08-01', 'data/frames/sst_20240801.jpg'],
+  ['2024-09-01', 'data/frames/sst_20240901.jpg'],
+  ['2024-10-01', 'data/frames/sst_20241001.jpg'],
+  ['2024-11-01', 'data/frames/sst_20241101.jpg'],
+  ['2024-12-01', 'data/frames/sst_20241201.jpg'],
+  ['2025-01-01', 'data/frames/sst_20250101.jpg'],
+  ['2025-02-01', 'data/frames/sst_20250201.jpg'],
+  ['2025-03-01', 'data/frames/sst_20250301.jpg'],
+  ['2025-04-01', 'data/frames/sst_20250401.jpg'],
+  ['2025-05-01', 'data/frames/sst_20250501.jpg'],
+  ['2025-06-01', 'data/frames/sst_20250601.jpg'],
+  ['2025-07-01', 'data/frames/sst_20250701.jpg'],
+  ['2025-08-01', 'data/frames/sst_20250801.jpg'],
+  ['2025-09-01', 'data/frames/sst_20250901.jpg'],
+  ['2025-10-01', 'data/frames/sst_20251001.jpg'],
+  ['2025-11-01', 'data/frames/sst_20251101.jpg'],
+  ['2025-12-01', 'data/frames/sst_20251201.jpg'],
+  ['2026-01-01', 'data/frames/sst_20260101.jpg'],
+  ['2026-02-01', 'data/frames/sst_20260201.jpg'],
+  ['2026-03-01', 'data/frames/sst_20260301.jpg'],
+  ['2026-04-01', 'data/frames/sst_20260401.jpg'],
+  ['2026-05-01', 'data/frames/sst_20260501.jpg'],
+  ['2026-06-01', 'data/frames/sst_20260601.jpg'],
+  ['2026-07-01', 'data/frames/sst_20260701.jpg'],
+  ['2026-08-01', 'data/frames/sst_20260801.jpg'],
+  ['2026-09-01', 'data/frames/sst_20260901.jpg'],
+  ['2026-10-01', 'data/frames/sst_20261001.jpg'],
+  ['2026-11-11', null],
+];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const timeInput = document.getElementById('time');
+const timeDate = document.getElementById('time-date');
+const timeStatus = document.getElementById('time-status');
+const frameCache = new Map();             // frame number -> its loaded picture
+let frameShown = FRAMES.length - 1;       // the picture now in the hidden canvas (the latest, at the start)
+let frameWanted = frameShown;             // the one the slider is on (it may still be loading)
+let framesUsable = location.protocol !== 'file:';  // a page opened as a file cannot read pixels of other files
+
+function frameLabel(i) {
+  const [y, m, d] = FRAMES[i][0].split('-');
+  return `${+d} ${MONTHS[+m - 1]} ${y}`;
+}
+function disableFrames(why) {
+  framesUsable = false;
+  timeInput.disabled = true;
+  timeStatus.textContent = why;
+}
+if (!framesUsable) disableFrames('The time slider needs the hosted version: open the page from its web address, not as a file.');
+timeInput.max = String(FRAMES.length - 1);
+timeInput.value = String(FRAMES.length - 1);
+
+// Can the browser read the pixels of this picture? (It cannot when the page is opened as a file.)
+function readable(im) {
+  try {
+    const t = document.createElement('canvas');
+    t.width = t.height = 1;
+    const c = t.getContext('2d');
+    c.drawImage(im, 0, 0, 1, 1);
+    c.getImageData(0, 0, 1, 1);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function showFrame(i, picture) {
+  ctx.drawImage(picture, 0, 0, MAP_W, MAP_H);  // the hidden canvas: the one place the values are read from
+  frameShown = i;
+  render();
+  // read the same spot again, in the new picture. The sound follows only if the pointer or keyboard is on the map.
+  if (lastProbe) probe(cursor.x, cursor.y, false, !(tipOn || markerOn));
+  const text = lastProbe ? `${frameLabel(i)}. ${describe(lastProbe.result, lastProbe.place)}` : frameLabel(i);
+  timeInput.setAttribute('aria-valuetext', text);  // a screen reader reads this value text
+  if (mode === 'voice') speak(text);
+}
+
+function onTime() {
+  const i = +timeInput.value;
+  frameWanted = i;
+  timeDate.textContent = frameLabel(i);
+  timeInput.setAttribute('aria-valuetext', frameLabel(i));
+  if (FRAMES[i][1] === null) { timeStatus.textContent = ''; showFrame(i, img); return; }  // the latest frame: already here
+  if (frameCache.has(i)) { timeStatus.textContent = ''; showFrame(i, frameCache.get(i)); return; }
+  timeStatus.textContent = 'Loading…';
+  const im = new Image();
+  im.onload = () => {
+    if (!readable(im)) { disableFrames('The time slider needs the hosted version: open the page from its web address, not as a file.'); return; }
+    frameCache.set(i, im);
+    if (frameWanted === i) { timeStatus.textContent = ''; showFrame(i, im); }  // the slider may have moved on meanwhile
+  };
+  im.onerror = () => { if (frameWanted === i) timeStatus.textContent = `Could not load ${frameLabel(i)}.`; };
+  im.src = FRAMES[i][1];
+}
+timeInput.addEventListener('input', onTime);
 
 // ---- Country labels: a visual layer, nothing more ----
 // The names are drawn on their own canvas, above the map and the grid. They never touch the hidden picture that
@@ -1405,7 +1527,7 @@ document.addEventListener('keydown', (e) => {
 
   if (e.ctrlKey || e.altKey || e.metaKey || aboutDlg.open) return;  // (while the dialog is open, keys belong to it)
   // Voice mode: after a screen change the heading has focus, so the arrow keys work from there too.
-  if (mode === 'voice' && ARROWS[e.key] && document.activeElement !== canvas && document.activeElement.tagName !== 'BUTTON') {
+  if (mode === 'voice' && ARROWS[e.key] && document.activeElement !== canvas && !['BUTTON', 'INPUT', 'SUMMARY'].includes(document.activeElement.tagName)) {
     canvas.focus();
     onMapKey(e);
     return;

@@ -9,6 +9,7 @@ Made for the NASA International Space Apps Challenge 2026, challenge **The Earth
 ## What it does
 
 - Shows a NASA Earth Information Center (EIC) visualization: the **Sea Surface Temperature (SST) Anomaly** map (NASA SVS #5176).
+- Lets you move through time: a slider under the map steps through 30 pictures of the same NASA series, the first available day of each month from June 2024 to October 2026 and the latest frame (11 November 2026). Moving the slider over the same spot lets you hear how a place changed.
 - Reads the colour under the pointer and converts it back to a value in degrees Celsius (warmer or colder than normal) with the colour scale NASA published for the map.
 - Turns that value into sound **in real time with the Web Audio API**. There are no recorded audio files: every sound is synthesised in the browser.
 - Works without a mouse and without sight: full keyboard control, a spoken guide, screen reader announcements and place names.
@@ -43,6 +44,7 @@ The five themes are the team's names for the character of each kind of place. Th
 | Help | | `H` |
 | Start / stop the sound | Start sound button | `Space` |
 | Grid on / off | Grid button | `G` |
+| Move through time | Time slider under the map | Arrow keys, `Home`, `End`, `PageUp`, `PageDown` while the slider has focus |
 | Country names on / off | Labels button | `L` |
 | Interface sounds on / off | UI sounds button | `U` |
 | Why does it sound like this? | "Why does it sound like this?" panel | `E` (short reason), `D` (all details) |
@@ -71,7 +73,8 @@ Buttons, zoom and the change between the two screens answer with very soft notes
 
 ## Data and accuracy
 
-- Map: NASA's Scientific Visualization Studio, *Sea Surface Temperature (SST) Anomaly - Near Real Time*, SVS #5176 (the version without date stamps, equirectangular, 1024 x 512). The picture is kept as a copy in this project: it shows the most recent frame available when it was downloaded, on 14 November 2026, and it does **not** update by itself. The copy is also in `data/`.
+- Map: NASA's Scientific Visualization Studio, *Sea Surface Temperature (SST) Anomaly - Near Real Time*, SVS #5176 (the version without date stamps, equirectangular, 1024 x 512). The picture is kept as a copy in this project: the map opens on the most recent frame that was available when it was downloaded, on 14 November 2026 (it is the frame of 11 November 2026; we checked this by comparing it with NASA's frames of 9, 10 and 11 November), and it does **not** update by itself. The copy is also in `data/`.
+- Time slider frames: NASA publishes the frames of this series only as 4096 x 2048 EXR files (half-float, ZIP compressed). For the slider we downloaded the first available frame of each month from June 2024 to October 2026, reduced each one to 1024 x 512 (average of 4 x 4 pixels), converted it to 8-bit colour with the standard sRGB curve and saved it as a JPEG in `data/frames/` (about 240 KB each, 7 MB in all). The conversion reproduces NASA's colour bar to within 0.5 of 255 on average, and the 11 November frame read with our colour table differs from NASA's own 1024 x 512 picture by 0.06 °C on average (98.7% of ocean pixels within 0.25 °C). The JPEG compression itself adds about the same 0.06 °C, as it does for NASA's picture, so differences smaller than about 0.1 °C should not be read as real. The frames are loaded from the page's own web address, so the slider works on the hosted page or a local web server; opened as a plain file, the browser does not let a page read the pixels of other files, and the slider is switched off with a note (the rest of the page works).
 - The values are **read back from the colours** of the picture, not from the original data files. We checked the conversion against NASA's colour bar: across the whole scale the average error is 0.012 °C and the largest 0.052 °C. The picture itself adds more uncertainty (image compression, blending at coasts), so treat values as approximate.
 - The colour scale ends at -4 °C and +4 °C; anything beyond is shown as the end of the scale.
 - 0 °C means "same as normal". The source page does not state which reference period "normal" is based on, so we do not claim one.
@@ -89,6 +92,7 @@ For a local web server: `python -m http.server`, then open `http://localhost:800
 - Dataset behind the visualization: JPL Multi-scale Ultra-high Resolution (MUR) SST analysis, NASA JPL / PO.DAAC (MUR-JPL-L4-GLOB-v4.1). https://podaac.jpl.nasa.gov/dataset/MUR-JPL-L4-GLOB-v4.1
 - Natural Earth (public domain), *Admin 0 - Countries*, 1:50m. https://www.naturalearthdata.com/ Used only to draw country names and to name the country under the pointer; a reduced copy (names, label points, sizes) is inside `index.html`.
 - Web Audio API and Web Speech API (built into browsers; no files or libraries are included).
+- The frames for the time slider were prepared once, offline, with Python (NumPy and Pillow). None of that is part of the page.
 - No other libraries, fonts, images, sound files or external services are used. No NASA logo is used.
 
 ## AI use
