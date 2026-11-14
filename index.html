@@ -13,18 +13,50 @@
   #marker { position:absolute; width:26px; height:26px; box-sizing:border-box; border:3px solid #fff; border-radius:50%;
             box-shadow:0 0 0 2px #000; transform:translate(-50%,-50%); pointer-events:none; }
   .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+  #access { font-size:18px; padding:8px 18px; margin:0 0 12px 8px; cursor:pointer; }
+  #access:focus-visible { outline:3px solid #ffd54a; outline-offset:3px; }
+
+  /* Welcome screen: first thing every visitor sees. Big text, big buttons, high contrast. */
+  #welcome { position:fixed; inset:0; z-index:10; display:flex; align-items:center; justify-content:center; padding:20px;
+             background:#05080c; overflow:auto; }
+  #welcome[hidden] { display:none; }
+  #w-card { max-width:720px; width:100%; }
+  #w-title { font-size:clamp(28px, 5vw, 44px); margin:0 0 16px; }
+  #w-text { font-size:clamp(20px, 3vw, 26px); line-height:1.5; margin:0 0 28px; }
+  #w-actions { display:flex; gap:16px; flex-wrap:wrap; }
+  #w-actions button { flex:1 1 240px; display:flex; align-items:center; gap:14px; font-size:22px; padding:20px 22px;
+                      background:#161c24; color:#fff; border:2px solid #ffd54a; border-radius:14px; cursor:pointer; text-align:left; }
+  #w-actions button:hover { background:#ffd54a; color:#111; }
+  #w-actions button:focus-visible { outline:4px solid #fff; outline-offset:4px; }
+  #w-actions kbd { font:700 22px/1 monospace; border:2px solid currentColor; border-radius:8px; padding:6px 12px; }
+  #w-hint { margin-top:24px; opacity:.85; font-size:18px; }
 </style>
 </head>
 <body>
+<div id="app">
 <h1>Earth Jukebox</h1>
-<button id="start">Start sound</button>
+<button id="start">Start sound</button><button id="access" aria-keyshortcuts="Control+Alt+B">Accessibility options</button>
 <div id="stage">
   <canvas id="map" width="1024" height="512" tabindex="0" role="application"
     aria-label="Sea surface temperature anomaly map. Use the arrow keys to move over the map, and Shift plus an arrow key to move faster. Each position is spoken and played as sound."></canvas>
   <div id="marker" hidden></div>
 </div>
 <div id="info">Move the mouse over the map, or press Tab to focus it and use the arrow keys</div>
+</div>
+
 <div id="live" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
+
+<div id="welcome" role="dialog" aria-modal="true" aria-labelledby="w-title">
+  <div id="w-card">
+    <h2 id="w-title"></h2>
+    <p id="w-text" aria-live="polite"></p>
+    <div id="w-actions">
+      <button id="w-yes" type="button"><kbd>F</kbd><span></span></button>
+      <button id="w-no" type="button"><kbd>J</kbd><span></span></button>
+    </div>
+    <p id="w-hint">Press F or J, or click a button. Press R to hear this again. Press Escape to skip.</p>
+  </div>
+</div>
 
 <script>
 // Color table read from NASA's colorbar: [value °C, R, G, B]
@@ -333,12 +365,16 @@ function updateSound(result, lon) {
 }
 
 const startBtn = document.getElementById('start');
-startBtn.addEventListener('click', () => {
-  if (!audio) startAudio();
+function syncButton() {
+  startBtn.textContent = audio && audio.ac.state === 'running' ? 'Stop sound' : 'Start sound';
+}
+function toggleSound() {  // used by the button, the Space key and the welcome screen
+  if (!audio) { startAudio(); audio.ac.onstatechange = syncButton; }
   else if (audio.ac.state === 'running') audio.ac.suspend();
   else audio.ac.resume();
-  startBtn.textContent = audio.ac.state === 'running' ? 'Stop sound' : 'Start sound';
-});
+  syncButton();
+}
+startBtn.addEventListener('click', toggleSound);
 
 // ---- Place names ----
 // Rough rectangles [name, latMin, latMax, lonMin, lonMax], good enough to say "where am I".
@@ -395,8 +431,9 @@ const live = document.getElementById('live');
 const marker = document.getElementById('marker');
 const cursor = { x: 512, y: 256 };  // current position in map pixels
 let liveToggle = false;
+let lastProbe = null;  // what the pointer is on right now, for the W (where am I) key
 
-function probe(x, y, speak) {
+function probe(x, y, announceIt) {
   cursor.x = x;
   cursor.y = y;
   const [r, g, b] = ctx.getImageData(x, y, 1, 1).data;
@@ -414,12 +451,10 @@ function probe(x, y, speak) {
   else text = (result.value > 0 ? '+' : '') + result.value.toFixed(1) + ' °C';
   info.textContent = `${place} · Lat ${lat.toFixed(1)}°, Lon ${lon.toFixed(1)}° → ${text}`;
 
-  // Only keyboard moves are spoken: mouse users see the text, and speaking every pixel would flood a screen reader.
-  // The invisible no-break space flips each time so an identical sentence is still announced again.
-  if (speak) {
-    liveToggle = !liveToggle;
-    live.textContent = describe(result, place) + (liveToggle ? ' ' : '');
-  }
+  lastProbe = { result, place, lat, lon };
+
+  // Only keyboard moves are announced: mouse users see the text, and announcing every pixel would flood a listener.
+  if (announceIt) announce(describe(result, place));
 }
 
 canvas.addEventListener('mousemove', (e) => {
@@ -446,6 +481,156 @@ canvas.addEventListener('keydown', (e) => {
   probe(x, y, true);
 });
 canvas.addEventListener('blur', () => { updateSound(null); marker.hidden = true; });
+
+// ---- Built-in voice ----
+// mode 'off'   : nothing extra (a screen reader may still read the live region)
+// mode 'voice' : the page speaks by itself with the browser's voice (user has no screen reader)
+// mode 'sr'    : the page writes everything into the live region for the user's own screen reader
+const MODE_KEY = 'earth-jukebox-mode';
+let mode = 'off';
+let lastAnnouncement = '';
+
+function speak(text) {
+  lastAnnouncement = text;
+  if (!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();  // a new sentence replaces the old one, like a screen reader does
+  for (const sentence of text.split(/(?<=[.?!])\s+/)) {  // short pieces: some browsers cut off long ones
+    const u = new SpeechSynthesisUtterance(sentence);
+    u.lang = 'en-US';
+    speechSynthesis.speak(u);
+  }
+}
+
+// The one way the page talks. Voice mode speaks it, every other mode puts it in the live region.
+function announce(text) {
+  lastAnnouncement = text;
+  if (mode === 'voice') { speak(text); return; }
+  liveToggle = !liveToggle;  // a changing invisible character makes a repeated sentence count as new
+  live.textContent = text + (liveToggle ? String.fromCharCode(160) : '');
+}
+
+const GUIDE = "Earth Jukebox turns NASA's sea surface temperature map into sound. " +
+  'Move over the map with the arrow keys, and hold Shift to move faster. ' +
+  'At each position you hear the place and how much warmer or colder than normal the water is. ' +
+  'Normal water sounds calm and neutral. Warmer water sounds brighter and livelier. ' +
+  'Colder water sounds lower, weaker and emptier. Land is a dull knock, and ice is a lonely glass note. ' +
+  'The sound moves left and right with the longitude. ' +
+  'Press W to hear where you are, R to repeat, H for help, and Space to stop or start the sound.';
+const HELP = 'Arrow keys move over the map. Hold Shift to move faster. W says where you are. ' +
+  'R repeats the last message. Space starts or stops the sound. ' +
+  'Control, Alt and B reopen the accessibility options.';
+
+function whereAmI() {
+  if (!lastProbe) { announce('No position yet. Use the arrow keys to move onto the map.'); return; }
+  const { result, place, lat, lon } = lastProbe;
+  announce(`${describe(result, place)}. Latitude ${Math.abs(lat).toFixed(0)} degrees ${lat >= 0 ? 'north' : 'south'}, ` +
+           `longitude ${Math.abs(lon).toFixed(0)} degrees ${lon >= 0 ? 'east' : 'west'}.`);
+}
+
+// ---- Welcome screen: a few F (yes) / J (no) questions ----
+// F and J are the keys with a raised bar on a keyboard, so they can be found without looking.
+const welcome = document.getElementById('welcome');
+const app = document.getElementById('app');
+const wTitle = document.getElementById('w-title');
+const wText = document.getElementById('w-text');
+const wYes = document.getElementById('w-yes');
+const wNo = document.getElementById('w-no');
+let step = 'ask';
+
+const STEPS = {
+  ask: {
+    title: 'Welcome to Earth Jukebox',
+    text: "Explore NASA's ocean temperature map through sound. Do you want blind assistance?",
+    yes: 'Yes, turn on blind assistance', no: 'No, continue',
+    onYes: () => show('how'), onNo: () => finish('off', false),
+  },
+  how: {
+    title: 'Blind assistance',
+    text: 'How should the page speak to you? The built-in voice works without a screen reader. If you choose it, please turn your screen reader off.',
+    yes: 'Built-in voice', no: 'My screen reader',
+    onYes: () => { mode = 'voice'; show('guide'); }, onNo: () => { mode = 'sr'; show('guide'); },
+  },
+  guide: {
+    title: 'Quick guide',
+    text: 'Would you like a short guide to how Earth Jukebox works?',
+    yes: 'Yes, tell me', no: 'No, start exploring',
+    onYes: () => finish(mode, true), onNo: () => finish(mode, false),
+  },
+};
+
+function promptText(s) { return `${s.title}. ${s.text} Press F for ${s.yes}, or J for ${s.no}.`; }
+
+function show(name) {
+  step = name;
+  const s = STEPS[name];
+  wTitle.textContent = s.title;
+  wText.textContent = s.text;   // this paragraph is a live region, so a screen reader reads the change
+  wYes.lastElementChild.textContent = s.yes;
+  wNo.lastElementChild.textContent = s.no;
+  wYes.focus();
+  // The first question is not spoken: browsers do not allow speech before the visitor has pressed something
+  // (R speaks it). After that, voice users hear every question; screen reader users get the live region only.
+  if (name !== 'ask' && mode !== 'sr') speak(promptText(s));
+}
+
+function openWelcome() {
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  welcome.hidden = false;
+  app.inert = true;  // nothing behind the welcome screen can be reached until it is closed
+  show('ask');
+}
+
+function finish(chosen, playGuide) {
+  mode = chosen;
+  try { localStorage.setItem(MODE_KEY, mode); } catch (e) { /* private window: just ask again next time */ }
+  welcome.hidden = true;
+  app.inert = false;
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  if (!audio) toggleSound();  // the key press counts as the "user gesture" browsers require before sound
+  if (mode !== 'off') canvas.focus();
+  if (playGuide) announce(GUIDE);
+  else if (mode !== 'off') announce('Map ready. Use the arrow keys to explore. Press H for help.');
+}
+
+wYes.addEventListener('click', () => STEPS[step].onYes());
+wNo.addEventListener('click', () => STEPS[step].onNo());
+document.getElementById('access').addEventListener('click', openWelcome);
+
+// ---- Keys that work everywhere ----
+document.addEventListener('keydown', (e) => {
+  const k = e.key.toLowerCase();
+  if (e.ctrlKey && e.altKey && k === 'b') { e.preventDefault(); openWelcome(); return; }
+
+  if (!welcome.hidden) {  // while the welcome screen is open only these keys do anything
+    if (e.ctrlKey || e.altKey || e.metaKey) return;
+    const s = STEPS[step];
+    if (k === 'f') { e.preventDefault(); s.onYes(); }
+    else if (k === 'j') { e.preventDefault(); s.onNo(); }
+    else if (k === 'r') { e.preventDefault(); speak(promptText(s)); }
+    else if (k === 'escape') { e.preventDefault(); finish(mode, false); }
+    return;
+  }
+
+  if (e.ctrlKey || e.altKey || e.metaKey) return;
+  // These shortcuts are active on the map, and everywhere in voice mode. (Not elsewhere: letters
+  // belong to screen readers and to typing.)
+  if (!(mode === 'voice' || document.activeElement === canvas)) return;
+  if (k === ' ' && e.target.tagName !== 'BUTTON') { e.preventDefault(); toggleSound(); }
+  else if (k === 'w') whereAmI();
+  else if (k === 'r') announce(lastAnnouncement || 'Nothing to repeat yet.');
+  else if (k === 'h') announce(HELP);
+});
+
+// ---- Start: show the welcome screen, unless this visitor already chose ----
+let stored = null;
+try { stored = localStorage.getItem(MODE_KEY); } catch (e) { /* no saved choice */ }
+if (stored === 'off' || stored === 'voice' || stored === 'sr') {
+  mode = stored;
+  welcome.hidden = true;
+  if (mode !== 'off') canvas.focus();
+} else {
+  openWelcome();
+}
 </script>
 </body>
 </html>
