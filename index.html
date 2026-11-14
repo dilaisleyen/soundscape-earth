@@ -64,6 +64,17 @@
   #r-coords { color:var(--muted); font-size:15px; }
   #r-theme { margin-top:2px; color:var(--gold); font-size:14px; }
   #r-theme:empty { display:none; }
+
+  /* "Why does it sound like this?": value -> sound -> meaning, built from the real sound rules */
+  #why { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:10px 16px; }
+  #why summary { cursor:pointer; font-weight:600; font-size:15px; padding:4px 0; }
+  #why-body { margin-top:8px; font-size:14px; line-height:1.4; }
+  #why-body p { margin:0 0 8px; }
+  .why-head { color:var(--gold); font-weight:700; font-size:16px; }
+  .why-unit { color:var(--muted); font-size:13px; }
+  #why-body dl { margin:0; }
+  #why-body dt { font-weight:600; color:var(--ink); margin-top:8px; }
+  #why-body dd { margin:2px 0 0; color:var(--muted); }
   #side-extra { flex:1 1 auto; min-height:0; overflow:auto; }  /* room for the "why does it sound like this" panel */
 
   /* Colour scale: the same colours NASA used, with a pin that follows the value under the pointer */
@@ -119,7 +130,8 @@
     #r-coords { font-size:13px; }
     .lg-title { font-size:12px; margin-bottom:10px; }
     .lg-other { display:none; }
-    #side-extra:empty { display:none; }
+    #side-extra { max-height:36vh; }
+    #why { padding:4px 0; background:none; border:0; border-radius:0; }
   }
   @media (max-width: 600px) {
     #app { --pad:12px; }
@@ -212,7 +224,12 @@
     <div class="lg-other"><span><i class="sw land"></i>Land</span><span><i class="sw ice"></i>Ice / no data</span></div>
   </section>
 
-  <div id="side-extra"></div>
+  <div id="side-extra" tabindex="0" role="region" aria-label="Explanation of the sound (scrollable)">
+    <details id="why" open>
+      <summary>Why does it sound like this?</summary>
+      <div id="why-body"></div>
+    </details>
+  </div>
 </aside>
 
 <p id="source">Map: NASA SVS #5176 &middot; Data: JPL MUR SST &middot; <button id="about-btn" class="linklike" type="button">About &amp; sources</button></p>
@@ -437,6 +454,13 @@ function startAudio() {
 //   solitude      ice / no data      one lonely glass note
 //   grounded      land               a dull, rough knock
 const THEMES = { calm: 'calm', warm: 'heartwarming', cold: 'melancholy', ice: 'solitude', land: 'grounded' };
+const THEME_TEXT = {  // what each theme means, in the words of the list above (used by the explanation panel)
+  calm: 'A soft, steady, neutral chord.',
+  heartwarming: 'A brighter, livelier chord with a shimmering layer.',
+  melancholy: 'A darker, weaker chord and a distant, hollow wind.',
+  solitude: 'One lonely glass note.',
+  grounded: 'A dull, rough knock.',
+};
 // Within this many degrees of 0 the theme is "calm". This only picks the label; the sound itself
 // does not have a dead zone and follows the value from 0 onwards.
 const CALM_BAND = 0.25;
@@ -496,9 +520,11 @@ function noise(type, freq) {
 }
 
 // Land: dull, rough knock - like stepping on wood or stone. Low, very short, almost no ring.
+const LAND_SOUND = { freq: 150, decay: 0.09 };  // Hz and seconds (also quoted by the explanation panel)
+const ICE_SOUND = { decay: 2.4, overtone: 2.76, twin: 1.004 };  // seconds, and note ratios (also quoted by the panel)
 function hitLand() {
-  const f = 150 * (0.92 + 0.16 * Math.random());  // each step slightly different
-  blip(tone(f), 0.5, 0.09, [audio.pan]);          // dull body
+  const f = LAND_SOUND.freq * (0.92 + 0.16 * Math.random());  // each step slightly different
+  blip(tone(f), 0.5, LAND_SOUND.decay, [audio.pan]);          // dull body
   blip(tone(f * 2.7), 0.12, 0.04, [audio.pan]);   // woody overtone
   const [grit, gritFilter] = noise('lowpass', 1500);
   blip(grit, 0.25, 0.035, [audio.pan], gritFilter);  // rough surface
@@ -531,9 +557,9 @@ function hitIce() {
     osc.start(t);
     osc.stop(t + decay + 0.02);
   };
-  ring(f, 0.035, 2.4, 0.985);
-  ring(f * 1.004, 0.035, 2.4, 0.985);  // slightly out of tune twin: slow beating
-  ring(f * 2.76, 0.012, 1.0, 0.99);    // glassy overtone
+  ring(f, 0.035, ICE_SOUND.decay, 0.985);
+  ring(f * ICE_SOUND.twin, 0.035, ICE_SOUND.decay, 0.985);  // slightly out of tune twin: slow beating
+  ring(f * ICE_SOUND.overtone, 0.012, 1.0, 0.99);           // glassy overtone
   ring(f / 4, 0.02, 2.8, 0.97);        // low, dark undertone
 
   const [crack, crackFilter] = noise('highpass', 6000);
@@ -842,6 +868,7 @@ function probe(x, y, announceIt) {
   placeTip();
 
   lastProbe = { result, place, lat, lon };
+  scheduleWhy();
 
   // Only keyboard moves are announced: mouse users see the text, and announcing every pixel would flood a listener.
   if (announceIt) announce(describe(result, place));
@@ -1034,7 +1061,7 @@ const GUIDE = "Earth Jukebox turns NASA's sea surface temperature map into sound
   'Press W to hear where you are, R to repeat, H for help, and Space to stop or start the sound.';
 const HELP = 'Arrow keys move over the map. Hold Shift to move faster. W says where you are. ' +
   'Plus and minus zoom in and out, and zero shows the whole map. G turns the grid on or off. ' +
-  'U turns the interface sounds on or off. ' +
+  'U turns the interface sounds on or off. E says why the current place sounds the way it does, and D gives the details. ' +
   'R repeats the last message. Space starts or stops the sound. ' +
   'Control, Alt and B reopen the accessibility options.';
 
@@ -1044,6 +1071,109 @@ function whereAmI() {
   announce(`${describe(result, place)}. Latitude ${Math.abs(lat).toFixed(0)} degrees ${lat >= 0 ? 'north' : 'south'}, ` +
            `longitude ${Math.abs(lon).toFixed(0)} degrees ${lon >= 0 ? 'east' : 'west'}.`);
 }
+
+// ---- "Why does it sound like this?" ----
+// The explanation is built from the real sound rules (soundFor, hitLand, hitIce and their constants), never from
+// a separate text, so it cannot say something the sound does not do.
+const NORMAL_SOUND = soundFor({ type: 'ocean', value: 0 });  // normal water: the baseline everything is compared with
+const WARMEST_SOUND = soundFor({ type: 'ocean', value: 4 });
+const COLDEST_SOUND = soundFor({ type: 'ocean', value: -4 });
+const whyBody = document.getElementById('why-body');
+const why = document.getElementById('why');
+const UNIT_NOTE = '<p class="why-unit"><b>°C anomaly</b> is how many degrees warmer (+) or colder (−) than normal the water is. ' +
+                  '<b>0 °C means normal.</b></p>';
+
+function signedValue(v) {
+  const mag = Math.abs(v).toFixed(1);
+  return mag === '0.0' ? '0.0' : (v > 0 ? '+' : '−') + mag;
+}
+function stereoText(lon) {
+  const pan = lon / 180, pct = Math.round(Math.abs(pan) * 100);
+  const where = `longitude ${Math.abs(Math.round(lon))}°${lon < 0 ? ' W' : lon > 0 ? ' E' : ''}`;
+  return pct < 3 ? `In the centre (${where}). West is left, east is right.`
+                 : `${pct}% to the ${pan < 0 ? 'left' : 'right'} (${where}). West is left, east is right.`;
+}
+
+// Returns null before any position is known. Otherwise: a headline, the theme, a one-sentence summary and the rows
+// [feature, what you hear and why].
+function explain(lp) {
+  if (!lp) return null;
+  const { result, lon } = lp;
+  const theme = themeFor(result);
+  const rows = [];
+  let head, short;
+  if (result.type === 'ocean') {
+    const v = result.value, s = soundFor(result), n = NORMAL_SOUND;
+    const mag = Math.abs(v).toFixed(1);
+    head = `${signedValue(v)} °C anomaly → ${theme}`;
+    const spoken = mag === '0.0' ? '0.0 degrees' : `${v > 0 ? 'Plus' : 'Minus'} ${mag} degrees`;
+    const kind = mag === '0.0' ? 'the same as normal' : `${mag} degrees ${v > 0 ? 'warmer' : 'colder'} than normal`;
+    const effect = v > CALM_BAND ? 'so the chord is brighter and louder and a shimmering layer joins in'
+                 : v < -CALM_BAND ? 'so the chord is darker and weaker and a distant, hollow wind takes over'
+                 : mag === '0.0' ? 'so the chord stays soft, steady and neutral'
+                 : 'so the chord stays soft, steady and neutral, with only a slight change';
+    short = `${theme} theme. ${spoken} means ${kind}, ${effect}.`;
+    const loud = Math.round((s.body / n.body - 1) * 100);
+    rows.push(['Pitch', 'Fixed notes (an open A and E chord). The value changes the character of the sound, not the pitch.']);
+    rows.push(['Brightness', `The chord filter is at ${Math.round(s.bodyCutoff)} Hz (normal water: ${Math.round(n.bodyCutoff)} Hz). Warmer water opens the chord, colder water closes it.`]);
+    rows.push(['Loudness', `The chord is ${loud === 0 ? 'as loud as' : `${Math.abs(loud)}% ${loud > 0 ? 'louder' : 'quieter'} than`} it is for normal water. Warmer is louder, colder is quieter.`]);
+    rows.push(['Shimmer', s.high > 0.0005
+      ? `A high layer at ${Math.round(s.high / WARMEST_SOUND.high * 100)}% of its strength, pulsing ${+s.shimmerRate.toFixed(1)} times a second. Only warmer water adds it.`
+      : 'Off. Only warmer water adds this high, pulsing layer.']);
+    rows.push(['Hollow wind', s.wind > 0.005
+      ? `A distant wind at ${Math.round(s.wind / COLDEST_SOUND.wind * 100)}% of its strength. Only colder water adds it.`
+      : 'Off. Only colder water adds this distant wind.']);
+    rows.push(['Harmony', 'Always consonant (open A and E fifths), so nothing sounds wrong: the value shows in brightness, loudness, shimmer and wind.']);
+  } else if (result.type === 'land') {
+    head = `Land → ${theme}`;
+    short = `${theme} theme. Land has no temperature value on this map, so it is a short, dull knock.`;
+    rows.push(['Pitch', `One low note, about ${LAND_SOUND.freq} Hz, a little different every time, like steps on wood or stone.`]);
+    rows.push(['Timbre', 'A dull body, a woody overtone and a short burst of rough noise.']);
+    rows.push(['Rhythm', `One knock for each move over land, at most one every ${HIT_GAP.land} seconds. Each lasts about ${LAND_SOUND.decay} seconds.`]);
+    rows.push(['Loudness', 'Fixed: land has no value to scale it.']);
+  } else {
+    const lo = Math.round(Math.min(...ICE_NOTES)), hi = Math.round(Math.max(...ICE_NOTES));
+    head = `Ice / no data → ${theme}`;
+    short = `${theme} theme. Ice or no data has no temperature value, so it is a single lonely glass note.`;
+    rows.push(['Pitch', `One high note picked at random between ${lo} and ${hi} Hz (the same A and E family). It sinks slightly as it fades.`]);
+    rows.push(['Timbre', `Glass: a sharp strike, an overtone ${ICE_SOUND.overtone} times the note (deliberately out of tune, so it sounds like glass and not like a musical note), a faint crack and a very quiet low tone underneath.`]);
+    rows.push(['Harmony', `Two copies of the note, ${+((ICE_SOUND.twin - 1) * 100).toFixed(1)}% apart, beat slowly against each other: cold and uneasy.`]);
+    rows.push(['Rhythm', `One note for each move over ice, at most one every ${HIT_GAP.ice} seconds, ringing for ${ICE_SOUND.decay} seconds. The silence in between is part of it.`]);
+    rows.push(['Loudness', 'Fixed, soft and far away: the highs are rolled off and the note sits in an echo.']);
+  }
+  rows.push(['Stereo', stereoText(lon)]);
+  rows.push(['Background', `A soft chord breathes in and out about every ${BREATH_SECONDS} seconds, with a tiny rising note now and then. It does not depend on the value.`]);
+  return { head, theme, short, rows };
+}
+
+let whyShown = '', whyQueued = false;
+function renderWhy() {
+  const e = explain(lastProbe);
+  const html = e
+    ? `<p class="why-head">${e.head}</p><p>${THEME_TEXT[e.theme]}</p>${UNIT_NOTE}` +
+      `<dl>${e.rows.map(([term, text]) => `<dt>${term}</dt><dd>${text}</dd>`).join('')}</dl>`
+    : `${UNIT_NOTE}<p>Move over the map, or use the arrow keys, to see why a place sounds the way it does.</p>`;
+  if (html !== whyShown) { whyBody.innerHTML = html; whyShown = html; }  // only touch the page when something changed
+}
+function scheduleWhy() {  // at most once per frame, however fast the pointer moves
+  if (whyQueued) return;
+  whyQueued = true;
+  requestAnimationFrame(() => { whyQueued = false; renderWhy(); });
+}
+// For listeners: E says the short reason, D says all of it
+function explainShort() {
+  const e = explain(lastProbe);
+  announce(e ? `${e.short} Press D for details.` : 'Move over the map first, then ask again.');
+}
+function explainDetail() {
+  const e = explain(lastProbe);
+  announce(e ? `${e.theme}: ${THEME_TEXT[e.theme]} ${e.rows.map(([term, text]) => `${term}. ${text}`).join(' ')}`
+             : 'Move over the map first, then ask again.');
+}
+const wide = window.matchMedia('(min-width: 1024px)');
+why.open = wide.matches;  // open beside the map; closed in the bar on a phone
+wide.addEventListener('change', (e) => { why.open = e.matches; });  // and again if the window crosses that width
+renderWhy();
 
 // ---- Two separate screens: the landing screen and the map screen ----
 // Only one of them is on show at a time. When the screen changes, the old one fades out and becomes
@@ -1212,6 +1342,8 @@ document.addEventListener('keydown', (e) => {
   else if (k === '0') resetView();
   else if (k === 'g') toggleGrid();
   else if (k === 'u') toggleUiSounds();
+  else if (k === 'e') explainShort();
+  else if (k === 'd') explainDetail();
 });
 
 // ---- Start: the landing screen, unless this visitor already chose ----

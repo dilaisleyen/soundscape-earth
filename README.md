@@ -44,9 +44,14 @@ The five themes are the team's names for the character of each kind of place. Th
 | Start / stop the sound | Start sound button | `Space` |
 | Grid on / off | Grid button | `G` |
 | Interface sounds on / off | UI sounds button | `U` |
+| Why does it sound like this? | "Why does it sound like this?" panel | `E` (short reason), `D` (all details) |
 | Accessibility options | Accessibility options button | `Ctrl` + `Alt` + `B` |
 
 The page has two separate screens. The **landing screen** opens first and asks whether you want blind assistance (`F` = yes, `J` = no). You can choose the built-in voice (the page speaks by itself) or your own screen reader, and hear a short spoken guide. Then the **map screen** opens. "Accessibility options" (or `Ctrl` + `Alt` + `B`) takes you back to the landing screen; the sound keeps playing while you move between the screens.
+
+## "Why does it sound like this?"
+
+A panel next to the map (a collapsible section in the bar under the map on a phone) explains the sound under the pointer: the value, which sound features it changes (brightness, loudness, shimmer, wind, rhythm, stereo and so on), the theme and what it means. It states the unit (°C anomaly: degrees warmer or colder than normal) and that 0 °C means normal. The text is generated from the same rules and numbers the sound uses, so it cannot describe something the sound does not do. Listeners can press `E` for a one-sentence reason and `D` for the details.
 
 ## Interface sounds
 
