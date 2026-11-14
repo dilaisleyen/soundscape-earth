@@ -825,6 +825,22 @@
       "accessed": "2026-11-14",
       "dates_available": "2019-07-23 to the latest day (one picture a day, with a few gaps)",
       "how_used": "Requested by the page while it is used, for the area on screen. Nothing from it is stored in this project. Colour classes of 0.1 degrees C from -3 to +3, read with the colour table above (copied from the colormap url). The Live detail button switches it off."
+    },
+    {
+      "id": "gibs-bluemarble-tiles",
+      "role": "Base map",
+      "name": "Blue Marble Shaded Relief and Bathymetry (MODIS)",
+      "service": "NASA's Global Imagery Browse Services (GIBS), WMTS tiles (EPSG:4326, tile matrix set 500m)",
+      "layer": "BlueMarble_ShadedRelief_Bathymetry",
+      "url": "https://gibs.earthdata.nasa.gov/wmts/epsg4326/best/BlueMarble_ShadedRelief_Bathymetry/default/500m/{z}/{y}/{x}.jpeg",
+      "capabilities": "https://gibs.earthdata.nasa.gov/wmts/epsg4326/best/wmts.cgi?SERVICE=WMTS&request=GetCapabilities",
+      "page": "https://www.earthdata.nasa.gov/engage/open-data-services-software/earthdata-developer-portal/gibs-api",
+      "attribution": "NASA GIBS",
+      "acknowledgement": "We acknowledge the use of imagery provided by services from NASA's Global Imagery Browse Services (GIBS), part of NASA's Earth Science Data and Information System (ESDIS).",
+      "underlying_data": "Blue Marble Shaded Relief and Bathymetry (MODIS), as described in the GIBS layer list",
+      "accessed": "2026-11-14",
+      "dates_available": "",
+      "how_used": "Requested by the page as map tiles (levels 0 to 7, about 300 m per pixel at the finest) and shown under the temperature picture, so land shows detail when you zoom in. Nothing from it is stored in this project, and no value, sound or text is read from it. If the tiles cannot be loaded, the page shows the saved picture alone."
     }
   ]
 }
