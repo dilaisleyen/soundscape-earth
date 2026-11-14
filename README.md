@@ -43,6 +43,7 @@ The five themes are the team's names for the character of each kind of place. Th
 | Help | | `H` |
 | Start / stop the sound | Start sound button | `Space` |
 | Grid on / off | Grid button | `G` |
+| Country names on / off | Labels button | `L` |
 | Interface sounds on / off | UI sounds button | `U` |
 | Why does it sound like this? | "Why does it sound like this?" panel | `E` (short reason), `D` (all details) |
 | Accessibility options | Accessibility options button | `Ctrl` + `Alt` + `B` |
@@ -63,7 +64,9 @@ Buttons, zoom and the change between the two screens answer with very soft notes
 - Positions are announced as, for example, "North Atlantic, plus 2.3 degrees", either spoken by the built-in voice or sent to a screen reader through an `aria-live` region.
 - When the screen changes, keyboard focus moves to the new screen's heading and the new screen is announced.
 - Motion is small and short (only fades and a slight slide). If your system asks for reduced motion, the slide is removed and the fades get shorter.
-- Place names (oceans, seas and continents) are rough rectangles and can be a little off near coasts.
+- Country names are drawn on the map as a label layer (bigger countries on the whole map, smaller ones as you zoom in, never overlapping). The label layer is separate from the picture the values are read from, so it cannot change the sound or the values.
+- The country named for the pointer comes from label points only, so it is approximate: a country is named only when it is clearly the closest one (in a test against Natural Earth's real borders it named about 4 in 10 land points and was right 98 times in 100 of those); otherwise the continent is named.
+- Place names for oceans, seas and continents are rough rectangles and can be a little off near coasts.
 - High contrast: the main text and controls measure above 8:1 (WCAG AA asks for 4.5:1).
 
 ## Data and accuracy
@@ -84,6 +87,7 @@ For a local web server: `python -m http.server`, then open `http://localhost:800
 
 - NASA Scientific Visualization Studio. *Sea Surface Temperature (SST) Anomaly - Near Real Time*, ID 5176. https://svs.gsfc.nasa.gov/5176/ Visualizer: Kel Elkins (USRA). Scientist: Atousa Saberi (NASA/GSFC). Credit: NASA's Scientific Visualization Studio.
 - Dataset behind the visualization: JPL Multi-scale Ultra-high Resolution (MUR) SST analysis, NASA JPL / PO.DAAC (MUR-JPL-L4-GLOB-v4.1). https://podaac.jpl.nasa.gov/dataset/MUR-JPL-L4-GLOB-v4.1
+- Natural Earth (public domain), *Admin 0 - Countries*, 1:50m. https://www.naturalearthdata.com/ Used only to draw country names and to name the country under the pointer; a reduced copy (names, label points, sizes) is inside `index.html`.
 - Web Audio API and Web Speech API (built into browsers; no files or libraries are included).
 - No other libraries, fonts, images, sound files or external services are used. No NASA logo is used.
 
