@@ -5,12 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Earth Jukebox</title>
 <style>
-  :root { --bg:#070b11; --panel:#0e141c; --line:#243040; --ink:#e8edf3; --muted:#9fb0c2; --gold:#ffd54a; }
+  :root { --bg:#070b11; --panel:#0e141c; --line:#243040; --ink:#e8edf3; --muted:#9fb0c2; --gold:#ffd54a;
+          --ease-out:cubic-bezier(0.23, 1, 0.32, 1);   /* strong ease-out: movement starts fast, so it feels responsive */
+          --t-in:280ms; --t-out:180ms; }               /* a screen arrives a little slower than the old one leaves */
   * { box-sizing:border-box; }
   body { margin:0; color:var(--ink); line-height:1.45;
          font-family:system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
          background:radial-gradient(1200px 600px at 50% -10%, #12212f 0%, var(--bg) 62%) fixed; }
   #app { max-width:1240px; margin:0 auto; padding:20px 20px 40px; }
+
+  /* Two separate screens: the landing screen and the map screen. Only one is ever on show.
+     The old one leaves quickly (fades, drifts up a little) and the new one arrives a little slower
+     (fades, rises a little). Only opacity and transform change, so it stays smooth. */
+  .view { transition:opacity var(--t-in) var(--ease-out), transform var(--t-in) var(--ease-out); }
+  .view[hidden] { display:none; }
+  .view.is-leaving { opacity:0; transform:translateY(-8px); transition-duration:var(--t-out); }
+  .view.is-entering { opacity:0; transform:translateY(14px); }
+  h1[tabindex="-1"]:focus { outline:none; }  /* after a screen change the heading takes focus quietly */
   :focus-visible { outline:3px solid var(--gold); outline-offset:3px; }
   .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
 
@@ -69,12 +80,11 @@
     .lg-title { font-size:14px; }
   }
 
-  /* Welcome screen: first thing every visitor sees. Big text, big buttons, high contrast. */
-  #welcome { position:fixed; inset:0; z-index:10; display:flex; align-items:center; justify-content:center; padding:20px;
-             background:#05080c; overflow:auto; }
-  #welcome[hidden] { display:none; }
+  /* Landing screen: first thing every visitor sees. Big text, big buttons, high contrast. */
+  #landing { min-height:100vh; min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:24px 20px; }
   #w-card { max-width:720px; width:100%; }
-  #w-title { font-size:clamp(28px, 5vw, 44px); margin:0 0 16px; }
+  #landing-title { font-size:clamp(34px, 6vw, 56px); margin:0 0 24px; }
+  #w-title { font-size:clamp(24px, 4vw, 34px); margin:0 0 12px; }
   #w-text { font-size:clamp(20px, 3vw, 26px); line-height:1.5; margin:0 0 28px; }
   #w-actions { display:flex; gap:16px; flex-wrap:wrap; }
   #w-actions button { flex:1 1 240px; display:flex; align-items:center; gap:14px; font-size:22px; padding:20px 22px;
@@ -83,13 +93,24 @@
   #w-actions button:focus-visible { outline:4px solid #fff; outline-offset:4px; }
   #w-actions kbd { font:700 22px/1 monospace; border:2px solid currentColor; border-radius:8px; padding:6px 12px; }
   #w-hint { margin-top:24px; opacity:.85; font-size:18px; }
+
+  /* Buttons answer a press right away (only transform changes) */
+  .tool, #w-actions button, #zoombar button { transition:transform 160ms var(--ease-out); }
+  .tool:active, #w-actions button:active, #zoombar button:active { transform:scale(0.97); }
+
+  /* Reduced motion: no drifting or pressing, only short fades */
+  @media (prefers-reduced-motion: reduce) {
+    :root { --t-in:120ms; --t-out:80ms; }
+    .view.is-leaving, .view.is-entering { transform:none; }
+    .tool:active, #w-actions button:active, #zoombar button:active { transform:none; }
+  }
 </style>
 </head>
 <body>
-<div id="app">
+<main id="app" class="view" aria-labelledby="app-title" hidden>
 <header>
   <div>
-    <h1>Earth Jukebox</h1>
+    <h1 id="app-title" tabindex="-1">Earth Jukebox</h1>
     <p class="sub">Explore NASA's sea surface temperature map by sound</p>
   </div>
   <div class="tools">
@@ -138,21 +159,22 @@
   <p>This page shows the most recent frame that was available when it was downloaded, on 14 November 2026; it does not update by itself. 0&nbsp;&deg;C means &ldquo;same as normal&rdquo;; the source page does not state which reference period &ldquo;normal&rdquo; is based on. Values are read from the colours of the picture, so they are approximate, and the colour scale ends at &plusmn;4&nbsp;&deg;C.</p>
   <p>Earth Jukebox is a prototype made for the NASA International Space Apps Challenge 2026. It is not an official NASA website, and NASA does not endorse this project.</p>
 </footer>
-</div>
+</main>
 
 <div id="live" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
 
-<div id="welcome" role="dialog" aria-modal="true" aria-labelledby="w-title">
+<main id="landing" class="view" aria-labelledby="landing-title">
   <div id="w-card">
+    <h1 id="landing-title" tabindex="-1">Earth Jukebox</h1>
     <h2 id="w-title"></h2>
-    <p id="w-text" aria-live="polite"></p>
+    <p id="w-text"></p>
     <div id="w-actions">
       <button id="w-yes" type="button"><kbd>F</kbd><span></span></button>
       <button id="w-no" type="button"><kbd>J</kbd><span></span></button>
     </div>
     <p id="w-hint">Press F or J, or click a button. Press R to hear this again. Press Escape to skip.</p>
   </div>
-</div>
+</main>
 
 <script>
 // Color table read from NASA's colorbar: [value °C, R, G, B]
@@ -475,7 +497,7 @@ const startBtn = document.getElementById('start');
 function syncButton() {
   startBtn.textContent = audio && audio.ac.state === 'running' ? 'Stop sound' : 'Start sound';
 }
-function toggleSound() {  // used by the button, the Space key and the welcome screen
+function toggleSound() {  // used by the button, the Space key and the landing screen
   if (!audio) { startAudio(); audio.ac.onstatechange = syncButton; }
   else if (audio.ac.state === 'running') audio.ac.suspend();
   else audio.ac.resume();
@@ -773,7 +795,7 @@ function revealCursor(x, y) {  // slide the view so the ring never reaches the e
   if (y < b.y + my) vw.cy -= b.y + my - y;
   if (y > b.y + b.h - my) vw.cy += y - (b.y + b.h - my);
 }
-canvas.addEventListener('keydown', (e) => {
+function onMapKey(e) {  // also used by the global key handler in voice mode
   const dir = ARROWS[e.key];
   if (!dir) return;  // any other key (Tab, etc.) keeps its normal job
   e.preventDefault();
@@ -785,7 +807,8 @@ canvas.addEventListener('keydown', (e) => {
   revealCursor(x, y);
   render();
   probe(x, y, true);
-});
+}
+canvas.addEventListener('keydown', onMapKey);
 canvas.addEventListener('blur', () => { updateSound(null); markerOn = false; placeMarker(); });
 
 if ('ResizeObserver' in window) new ResizeObserver(resize).observe(canvas);  // the map frame changed size
@@ -816,11 +839,14 @@ function speak(text) {
 }
 
 // The one way the page talks. Voice mode speaks it, every other mode puts it in the live region.
+function toLive(text) {  // write into the live region, which a screen reader reads out
+  liveToggle = !liveToggle;  // a changing invisible character makes a repeated sentence count as new
+  live.textContent = text + (liveToggle ? String.fromCharCode(160) : '');
+}
 function announce(text) {
   lastAnnouncement = text;
   if (mode === 'voice') { speak(text); return; }
-  liveToggle = !liveToggle;  // a changing invisible character makes a repeated sentence count as new
-  live.textContent = text + (liveToggle ? String.fromCharCode(160) : '');
+  toLive(text);
 }
 
 const GUIDE = "Earth Jukebox turns NASA's sea surface temperature map into sound. " +
@@ -842,10 +868,63 @@ function whereAmI() {
            `longitude ${Math.abs(lon).toFixed(0)} degrees ${lon >= 0 ? 'east' : 'west'}.`);
 }
 
-// ---- Welcome screen: a few F (yes) / J (no) questions ----
+// ---- Two separate screens: the landing screen and the map screen ----
+// Only one of them is on show at a time. When the screen changes, the old one fades out and becomes
+// inert, the new one is shown, takes keyboard focus on its heading and is announced.
+// The sound is not touched: the audio context, the ambient bed and the Start / Stop state go on as they were.
+const landing = document.getElementById('landing');
+const app = document.getElementById('app');  // the map screen
+const SCREENS = { landing, app };
+const HEADINGS = { landing: document.getElementById('landing-title'), app: document.getElementById('app-title') };
+let screen = 'landing';
+let moving = 0;  // counts screen changes, so a newer change cancels an older one that is still running
+
+function cssMs(name) {  // the transition times live in CSS, where reduced motion makes them shorter
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return v.endsWith('ms') ? parseFloat(v) : parseFloat(v) * 1000 || 0;
+}
+
+function setScreenNow(name) {  // first paint: no animation
+  moving++;
+  screen = name;
+  for (const [key, el] of Object.entries(SCREENS)) {
+    el.hidden = key !== name;
+    el.inert = false;
+    el.classList.remove('is-leaving', 'is-entering');
+  }
+  if (name === 'app') resize();  // the map was hidden, so it has to measure itself again
+}
+
+function showScreen(name, then) {
+  const ticket = ++moving;
+  const to = SCREENS[name];
+  const from = Object.values(SCREENS).find((el) => el !== to && !el.hidden);  // the other screen, if it is on show
+  screen = name;
+  for (const el of Object.values(SCREENS)) el.classList.remove('is-leaving', 'is-entering');
+  const arrive = () => {
+    if (ticket !== moving) return;  // a newer change has taken over
+    if (from) { from.hidden = true; from.inert = false; }
+    to.hidden = false;
+    to.inert = false;
+    if (name === 'app') resize();        // the map was hidden, so it has to measure itself again
+    to.classList.add('is-entering');
+    void to.offsetWidth;                 // let the browser see the starting state ...
+    to.classList.remove('is-entering');  // ... then it moves to the resting state by itself
+    window.scrollTo(0, 0);
+    HEADINGS[name].focus({ preventScroll: true });
+    if (then) then();
+  };
+  if (from) {
+    from.inert = true;  // nothing on the leaving screen can be reached any more
+    from.classList.add('is-leaving');
+    setTimeout(arrive, cssMs('--t-out'));
+  } else {
+    arrive();
+  }
+}
+
+// ---- Landing screen: a few F (yes) / J (no) questions ----
 // F and J are the keys with a raised bar on a keyboard, so they can be found without looking.
-const welcome = document.getElementById('welcome');
-const app = document.getElementById('app');
 const wTitle = document.getElementById('w-title');
 const wText = document.getElementById('w-text');
 const wYes = document.getElementById('w-yes');
@@ -875,48 +954,51 @@ const STEPS = {
 
 function promptText(s) { return `${s.title}. ${s.text} Press F for ${s.yes}, or J for ${s.no}.`; }
 
-function show(name) {
+// entry = true when the screen has just arrived: then the heading keeps focus and Tab reaches the buttons
+function show(name, entry) {
   step = name;
   const s = STEPS[name];
   wTitle.textContent = s.title;
-  wText.textContent = s.text;   // this paragraph is a live region, so a screen reader reads the change
+  wText.textContent = s.text;
   wYes.lastElementChild.textContent = s.yes;
   wNo.lastElementChild.textContent = s.no;
-  wYes.focus();
-  // The first question is not spoken: browsers do not allow speech before the visitor has pressed something
-  // (R speaks it). After that, voice users hear every question; screen reader users get the live region only.
-  if (name !== 'ask' && mode !== 'sr') speak(promptText(s));
+  if (!entry) wYes.focus();
+  const text = promptText(s);
+  // The first question is never spoken by the built-in voice: browsers do not allow speech before the visitor
+  // has pressed something (R speaks it). After F was pressed, speech is allowed. Everyone else gets the live region.
+  if (name === 'how') { speak(text); toLive(text); }
+  else announce(text);
 }
 
-function openWelcome() {
+function openLanding() {  // the Accessibility options button, or Ctrl + Alt + B
   if ('speechSynthesis' in window) speechSynthesis.cancel();
-  welcome.hidden = false;
-  app.inert = true;  // nothing behind the welcome screen can be reached until it is closed
-  show('ask');
+  if (screen === 'landing') { show('ask', true); HEADINGS.landing.focus({ preventScroll: true }); return; }
+  updateSound(null);  // the data sound fades away; the ambient bed and the Start / Stop state stay as they are
+  showScreen('landing', () => show('ask', true));
 }
 
 function finish(chosen, playGuide) {
   mode = chosen;
   try { localStorage.setItem(MODE_KEY, mode); } catch (e) { /* private window: just ask again next time */ }
-  welcome.hidden = true;
-  app.inert = false;
   if ('speechSynthesis' in window) speechSynthesis.cancel();
   if (!audio) toggleSound();  // the key press counts as the "user gesture" browsers require before sound
-  if (mode !== 'off') canvas.focus();
-  if (playGuide) announce(GUIDE);
-  else if (mode !== 'off') announce('Map ready. Use the arrow keys to explore. Press H for help.');
+  showScreen('app', () => {
+    const how = mode === 'voice' ? 'Use the arrow keys to explore. Press H for help.'
+                                 : 'Press Tab to reach the map, then use the arrow keys.';
+    announce(`Map screen. ${playGuide ? GUIDE : how}`);
+  });
 }
 
 wYes.addEventListener('click', () => STEPS[step].onYes());
 wNo.addEventListener('click', () => STEPS[step].onNo());
-document.getElementById('access').addEventListener('click', openWelcome);
+document.getElementById('access').addEventListener('click', openLanding);
 
 // ---- Keys that work everywhere ----
 document.addEventListener('keydown', (e) => {
   const k = e.key.toLowerCase();
-  if (e.ctrlKey && e.altKey && k === 'b') { e.preventDefault(); openWelcome(); return; }
+  if (e.ctrlKey && e.altKey && k === 'b') { e.preventDefault(); openLanding(); return; }
 
-  if (!welcome.hidden) {  // while the welcome screen is open only these keys do anything
+  if (screen === 'landing') {  // on the landing screen only these keys do anything
     if (e.ctrlKey || e.altKey || e.metaKey) return;
     const s = STEPS[step];
     if (k === 'f') { e.preventDefault(); s.onYes(); }
@@ -927,6 +1009,12 @@ document.addEventListener('keydown', (e) => {
   }
 
   if (e.ctrlKey || e.altKey || e.metaKey) return;
+  // Voice mode: after a screen change the heading has focus, so the arrow keys work from there too.
+  if (mode === 'voice' && ARROWS[e.key] && document.activeElement !== canvas && document.activeElement.tagName !== 'BUTTON') {
+    canvas.focus();
+    onMapKey(e);
+    return;
+  }
   // These shortcuts are active on the map, and everywhere in voice mode. (Not elsewhere: letters
   // belong to screen readers and to typing.)
   if (!(mode === 'voice' || document.activeElement === canvas)) return;
@@ -940,15 +1028,16 @@ document.addEventListener('keydown', (e) => {
   else if (k === 'g') toggleGrid();
 });
 
-// ---- Start: show the welcome screen, unless this visitor already chose ----
+// ---- Start: the landing screen, unless this visitor already chose ----
 let stored = null;
 try { stored = localStorage.getItem(MODE_KEY); } catch (e) { /* no saved choice */ }
 if (stored === 'off' || stored === 'voice' || stored === 'sr') {
   mode = stored;
-  welcome.hidden = true;
-  if (mode !== 'off') canvas.focus();
+  setScreenNow('app');
 } else {
-  openWelcome();
+  setScreenNow('landing');
+  show('ask', true);
+  HEADINGS.landing.focus({ preventScroll: true });
 }
 </script>
 </body>

@@ -44,12 +44,14 @@ The sound design was described and decided by the team; the mapping lives in `so
 | Grid on / off | Grid button | `G` |
 | Accessibility options | Accessibility options button | `Ctrl` + `Alt` + `B` |
 
-When the page opens, a welcome screen asks whether you want blind assistance (`F` = yes, `J` = no). You can choose the built-in voice (the page speaks by itself) or your own screen reader, and hear a short spoken guide.
+The page has two separate screens. The **landing screen** opens first and asks whether you want blind assistance (`F` = yes, `J` = no). You can choose the built-in voice (the page speaks by itself) or your own screen reader, and hear a short spoken guide. Then the **map screen** opens. "Accessibility options" (or `Ctrl` + `Alt` + `B`) takes you back to the landing screen; the sound keeps playing while you move between the screens.
 
 ## Accessibility
 
 - Fully usable with the keyboard; visible focus; a logical tab order.
 - Positions are announced as, for example, "North Atlantic, plus 2.3 degrees", either spoken by the built-in voice or sent to a screen reader through an `aria-live` region.
+- When the screen changes, keyboard focus moves to the new screen's heading and the new screen is announced.
+- Motion is small and short (only fades and a slight slide). If your system asks for reduced motion, the slide is removed and the fades get shorter.
 - Place names (oceans, seas and continents) are rough rectangles and can be a little off near coasts.
 - High contrast: the main text and controls measure above 8:1 (WCAG AA asks for 4.5:1).
 
