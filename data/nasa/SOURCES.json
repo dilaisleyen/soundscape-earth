@@ -1,5 +1,5 @@
 {
-  "note": "Where every NASA picture in data/nasa/ comes from. The About & sources dialog of the page is built from this file. Entries with fetch=true can be downloaded again with scripts/fetch_nasa_data.py. NASA does not endorse this project.",
+  "note": "Where every NASA picture in data/nasa/ comes from, and the live NASA service the page can ask for finer pictures. The About & sources dialog of the page is built from this file. Entries in files with fetch=true can be downloaded again with scripts/fetch_nasa_data.py. NASA does not endorse this project.",
   "media_usage_guidelines": "https://www.nasa.gov/nasa-brand-center/images-and-media/",
   "files": [
     {
@@ -807,6 +807,24 @@
       },
       "bytes": 237482,
       "sha256": "0d40a4a76e5af0ef256143114dfcd3f0ce884753d93671375bf77ba2a5459340"
+    }
+  ],
+  "live_sources": [
+    {
+      "id": "gibs-mur-sst-anomalies",
+      "name": "Sea Surface Temperature Anomalies (L4, MUR, GHRSST)",
+      "service": "NASA's Global Imagery Browse Services (GIBS), WMS",
+      "layer": "GHRSST_L4_MUR_Sea_Surface_Temperature_Anomalies",
+      "url": "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi",
+      "capabilities": "https://gibs.earthdata.nasa.gov/wmts/epsg4326/best/wmts.cgi?SERVICE=WMTS&request=GetCapabilities&layer=GHRSST_L4_MUR_Sea_Surface_Temperature_Anomalies",
+      "colormap": "https://gibs.earthdata.nasa.gov/colormaps/v1.3/GHRSST_Sea_Surface_Temperature_Anomalies.xml",
+      "page": "https://www.earthdata.nasa.gov/engage/open-data-services-software/earthdata-developer-portal/gibs-api",
+      "attribution": "NASA GIBS",
+      "acknowledgement": "We acknowledge the use of imagery provided by services from NASA's Global Imagery Browse Services (GIBS), part of NASA's Earth Science Data and Information System (ESDIS).",
+      "underlying_data": "JPL MUR SST analysis (Multi-scale Ultra-high Resolution Sea Surface Temperature), PO.DAAC",
+      "accessed": "2026-11-14",
+      "dates_available": "2019-07-23 to the latest day (one picture a day, with a few gaps)",
+      "how_used": "Requested by the page while it is used, for the area on screen. Nothing from it is stored in this project. Colour classes of 0.1 degrees C from -3 to +3, read with the colour table above (copied from the colormap url). The Live detail button switches it off."
     }
   ]
 }

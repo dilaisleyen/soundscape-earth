@@ -43,7 +43,9 @@
   #timebar label { font-weight:600; font-size:15px; }
   #time { flex:1; min-width:0; height:32px; accent-color:var(--gold); cursor:pointer; }
   #time-date { min-width:6.5em; text-align:right; font-weight:600; font-variant-numeric:tabular-nums; color:var(--gold); }
-  #time-status { color:var(--muted); font-size:13px; }
+  #time-status, #live-status { color:var(--muted); font-size:13px; }
+  #live-status { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #live-btn { min-height:32px; padding:4px 12px; font-size:14px; }
   #time-status:empty { display:none; }
   #time:disabled { cursor:not-allowed; opacity:.5; }
   #stage { position:relative; width:100%; aspect-ratio:2 / 1; }
@@ -220,6 +222,8 @@
     <label for="time">Time</label>
     <input id="time" type="range" min="0" max="29" step="1" value="29" aria-valuetext="11 Nov 2026">
     <output id="time-date" for="time">11 Nov 2026</output>
+    <button id="live-btn" class="tool" type="button" aria-pressed="true" title="Ask NASA GIBS for finer, up-to-date pictures of the area on screen">Live detail</button>
+    <span id="live-status"></span>
     <span id="time-status"></span>
   </div>
 </div>
@@ -253,15 +257,15 @@
   </div>
 </aside>
 
-<p id="source">Map: NASA SVS #5176 &middot; Data: JPL MUR SST &middot; Names: Natural Earth &middot; <button id="about-btn" class="linklike" type="button">About &amp; sources</button></p>
+<p id="source">Map: NASA SVS #5176 &middot; Live detail: NASA GIBS &middot; Data: JPL MUR SST &middot; Names: Natural Earth &middot; <button id="about-btn" class="linklike" type="button">About &amp; sources</button></p>
 
 <dialog id="about" aria-labelledby="about-title">
   <h2 id="about-title">About &amp; sources</h2>
   <div id="about-sources">
-    <p>Map: NASA's Scientific Visualization Studio, <em>Sea Surface Temperature (SST) Anomaly &ndash; Near Real Time</em> (SVS #5176). Visualizer: Kel Elkins (USRA). Scientist: Atousa Saberi (NASA/GSFC). Data: JPL MUR SST analysis (PO.DAAC). (The full list of pictures is in data/nasa/SOURCES.json; it could not be loaded here.)</p>
+    <p>Map: NASA's Scientific Visualization Studio, <em>Sea Surface Temperature (SST) Anomaly &ndash; Near Real Time</em> (SVS #5176). Visualizer: Kel Elkins (USRA). Scientist: Atousa Saberi (NASA/GSFC). Data: JPL MUR SST analysis (PO.DAAC). Live detail: we acknowledge the use of imagery provided by services from NASA's Global Imagery Browse Services (GIBS), part of NASA's Earth Science Data and Information System (ESDIS). (The full list is in data/nasa/SOURCES.json; it could not be loaded here.)</p>
   </div>
-  <p>NASA imagery and data used here are provided by NASA and used under <a href="https://www.nasa.gov/nasa-brand-center/images-and-media/" target="_blank" rel="noopener">NASA's Media Usage Guidelines</a>. The pictures are copies kept in this project, and none of them is loaded from NASA's server while you use the page. NASA does not endorse this project.</p>
-  <p>The pictures do not update by themselves. 0&nbsp;&deg;C means &ldquo;same as normal&rdquo;; the source page does not state which reference period &ldquo;normal&rdquo; is based on. Values are read from the colours of the picture, so they are approximate, and the colour scale ends at &plusmn;4&nbsp;&deg;C.</p>
+  <p>NASA imagery and data used here are provided by NASA and used under <a href="https://www.nasa.gov/nasa-brand-center/images-and-media/" target="_blank" rel="noopener">NASA's Media Usage Guidelines</a>. The pictures in data/nasa/ are copies kept in this project. When you are online, the page also asks NASA's GIBS service for finer, up-to-date pictures of the area on screen (the Live detail button switches that off); nothing else is requested from NASA's servers. NASA does not endorse this project.</p>
+  <p>The pictures do not update by themselves. 0&nbsp;&deg;C means &ldquo;same as normal&rdquo;; the source page does not state which reference period &ldquo;normal&rdquo; is based on. Values are read from the colours of the picture, so they are approximate, and the colour scale ends at &plusmn;4&nbsp;&deg;C. The live detail comes in classes of 0.1&nbsp;&deg;C that end at &plusmn;3&nbsp;&deg;C, and it is a different product from the saved picture (GIBS&rsquo;s MUR anomaly instead of the SVS one), so the two typically differ by about 0.3&nbsp;&deg;C.</p>
   <p>Country names: Natural Earth (public domain), <em>Admin 0 &ndash; Countries</em>, 1:50m, naturalearthdata.com. They are a label layer only: the sound and the values never use them. The place named for the pointer is approximate: a country is named only when it is clearly the closest one, otherwise the continent is named.</p>
   <p>Earth Jukebox is a prototype made for the NASA International Space Apps Challenge 2026. It is not an official NASA website, and NASA does not endorse this project.</p>
   <button id="about-close" class="tool" type="button" autofocus>Close</button>
@@ -301,6 +305,21 @@ const labelCanvas = document.getElementById('labels');   // country names: their
 const labelCtx = labelCanvas.getContext('2d');
 let showLabels = true;
 let labelsDrawn = 0;  // how many names the last drawing placed (for checking)
+// Live detail from NASA GIBS (the code is in the "Live detail" section further down; the state is here because the
+// first drawing already looks at it)
+const GIBS = {
+  wms: 'https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi',
+  caps: 'https://gibs.earthdata.nasa.gov/wmts/epsg4326/best/wmts.cgi?SERVICE=WMTS&request=GetCapabilities&layer=GHRSST_L4_MUR_Sea_Surface_Temperature_Anomalies',
+  layer: 'GHRSST_L4_MUR_Sea_Surface_Temperature_Anomalies',
+};
+// GIBS's colour table for that layer (https://gibs.earthdata.nasa.gov/colormaps/v1.3/GHRSST_Sea_Surface_Temperature_Anomalies.xml):
+// [red, green, blue, value in degrees C], one row for each class of 0.1 degrees C. The two open ends count as -3 and +3.
+const GIBS_CLASSES = [[107,0,219,-3.0],[116,0,214,-2.95],[127,0,211,-2.85],[137,0,207,-2.75],[150,0,202,-2.65],[145,9,204,-2.55],[127,26,209,-2.45],[96,49,220,-2.35],[65,75,230,-2.25],[34,100,241,-2.15],[8,124,251,-2.05],[0,148,255,-1.95],[0,174,255,-1.85],[0,202,255,-1.75],[0,227,255,-1.65],[3,248,250,-1.55],[24,252,229,-1.45],[47,255,206,-1.35],[71,255,182,-1.25],[96,255,158,-1.15],[118,255,140,-1.05],[136,255,132,-0.95],[151,255,139,-0.85],[164,255,145,-0.75],[177,255,152,-0.65],[189,254,158,-0.55],[191,244,163,-0.45],[191,232,169,-0.35],[191,219,176,-0.25],[191,208,182,-0.15],[194,202,184,-0.05],[202,202,183,0.05],[213,213,172,0.15],[226,226,162,0.25],[237,237,152,0.35],[249,248,141,0.45],[255,246,121,0.55],[255,234,94,0.65],[255,222,67,0.75],[255,208,37,0.85],[255,194,9,0.95],[255,182,1,1.05],[255,170,0,1.15],[255,157,0,1.25],[255,145,0,1.35],[255,130,0,1.45],[255,113,0,1.55],[255,89,0,1.65],[255,61,0,1.75],[255,33,0,1.85],[254,9,0,1.95],[249,1,19,2.05],[243,0,45,2.15],[236,0,74,2.25],[230,0,103,2.35],[222,0,125,2.45],[211,0,133,2.55],[191,0,104,2.65],[171,0,72,2.75],[154,0,44,2.85],[136,0,15,2.95],[128,0,0,3.0]];
+let liveOn = true;               // the Live detail button
+let detail = null;               // the live picture in use: { date, frame, lon0, lon1, lat0, lat1, w, h, cls, canvas }
+let liveDate = null;             // the newest day GIBS has
+let liveDateState = 'pending';   // 'pending', 'ready' or 'failed'
+let detailTimer = 0, detailAbort = null, detailFailedKey = '', detailFailedAt = 0;  // the wait, the request in flight, the last failure
 // The picture lives at its real size in a hidden canvas. Every value is read from here, never from the
 // zoomed picture on screen, so zooming can never change what a pixel means.
 const data = document.createElement('canvas');
@@ -787,11 +806,13 @@ function render() {
   view.clearRect(0, 0, W, H);
   view.imageSmoothingEnabled = W / b.w < 3;  // zoomed in far: show the real pixels instead of a blur
   view.drawImage(data, b.x, b.y, b.w, b.h, 0, 0, W, H);
+  drawDetail(b);  // the live picture from GIBS, if there is one for this area
   drawGrid(b);
   drawLabels(b);
   placeMarker();
   placeTip();
   zoomLabel.textContent = vw.zoom === 1 ? 'Whole map' : `${+vw.zoom.toFixed(1)}× zoom`;
+  scheduleDetail();  // when the view has been still for a moment, finer detail is asked for
 }
 
 function resize() {  // keep the drawing sharp: one canvas pixel per screen pixel
@@ -881,16 +902,18 @@ function setPin(value) {  // the white triangle above the colour scale
 
 // ---- One function for every way of pointing at the map (mouse, finger or keyboard) ----
 function probe(x, y, announceIt, quiet) {  // quiet: update the readout only, without touching the sound
-  x = Math.max(0, Math.min(MAP_W - 1, Math.floor(x)));
-  y = Math.max(0, Math.min(MAP_H - 1, Math.floor(y)));
+  x = Math.max(0, Math.min(MAP_W - 0.001, x));  // the fractions stay: with the live detail one saved pixel holds many values
+  y = Math.max(0, Math.min(MAP_H - 0.001, y));
   cursor.x = x;
   cursor.y = y;
-  const [r, g, b] = ctx.getImageData(x, y, 1, 1).data;
-  const result = readPixel(r, g, b);
+  let [r, g, b] = ctx.getImageData(Math.floor(x), Math.floor(y), 1, 1).data;  // the saved picture
+  let result = readPixel(r, g, b);
 
   // flat map: left edge = -180°, right edge = +180°, top = 90°N, bottom = 90°S
   const lon = x / MAP_W * 360 - 180;
   const lat = 90 - y / MAP_H * 180;
+  const live = detailAt(lon, lat);  // the finer live picture, where there is one with data
+  if (live) { result = { type: 'ocean', value: live.value }; [r, g, b] = live.color; }
   if (!quiet) updateSound(result, lon);
 
   const place = placeName(result.type, lat, lon);
@@ -1045,7 +1068,7 @@ function onMapKey(e) {  // also used by the global key handler in voice mode
   if (!dir) return;  // any other key (Tab, etc.) keeps its normal job
   e.preventDefault();
   const n = (e.shiftKey ? 4 : 1) * stepPx();
-  let x = cursor.x + dir[0] * n, y = cursor.y + dir[1] * n;
+  let x = Math.floor(cursor.x) + dir[0] * n, y = Math.floor(cursor.y) + dir[1] * n;  // the keyboard moves on whole saved pixels
   x = vw.zoom === 1 ? (x + MAP_W) % MAP_W : Math.max(0, Math.min(MAP_W - 1, x));  // whole map: the world wraps east-west; zoomed: stops at the edge
   y = Math.max(0, Math.min(MAP_H - 1, y));                                          // always stops at the poles
   markerOn = true;
@@ -1114,6 +1137,181 @@ function whereAmI() {
            `longitude ${Math.abs(lon).toFixed(0)} degrees ${lon >= 0 ? 'east' : 'west'}.`);
 }
 
+// ---- Live detail: finer, up-to-date pictures from NASA GIBS for the area on screen ----
+// The picture that opens with the page (and the monthly pictures of the slider) are copies kept in this project:
+// 1024 x 512 pixels, about 39 km per pixel. NASA's GIBS service (Global Imagery Browse Services) serves the same kind
+// of data, the MUR sea surface temperature anomaly, down to about 1 km and up to the latest day. When you are online,
+// the page asks GIBS for just the area on screen (a few hundred KB) a moment after you stop zooming or moving, draws it
+// over the copy, and reads the values from it. Until it arrives, and whenever GIBS cannot be reached, the copy
+// stays in use. GIBS draws the temperatures in its own colours in classes of 0.1 degrees C; they are turned back into
+// values with GIBS's colour table (GIBS_CLASSES) and painted in this page's colours, so the legend stays right.
+const GIBS_PX_PER_DEG = 1 / 0.0088;  // the finest picture GIBS has
+const detailKey = (c) => c[0] | (c[1] << 8) | (c[2] << 16);  // a colour as one number, same layout as a pixel's red, green, blue
+const CLASS_OF_COLOUR = new Map(GIBS_CLASSES.map((c, i) => [detailKey(c), i + 1]));  // colour -> class number (1 to 62; 0 = no data)
+function lutColourWord(value) {  // this page's colour for a value, as one 32-bit pixel word (opaque)
+  let best = LUT[0];
+  for (const row of LUT) if (Math.abs(row[0] - value) < Math.abs(best[0] - value)) best = row;
+  return (best[1] | (best[2] << 8) | (best[3] << 16) | (255 << 24)) >>> 0;
+}
+const CLASS_PAINT = GIBS_CLASSES.map((c) => lutColourWord(c[3]));
+const nearestClassCache = new Map();
+function nearestClass(word) {  // for the rare colour that is not exactly in the table (blended edges)
+  const key = word & 0xffffff;
+  if (CLASS_OF_COLOUR.has(key)) return CLASS_OF_COLOUR.get(key);
+  if (nearestClassCache.has(key)) return nearestClassCache.get(key);
+  const r = key & 255, g = (key >> 8) & 255, b = (key >> 16) & 255;
+  let best = 1, bd = Infinity;
+  GIBS_CLASSES.forEach((c, i) => { const d = (c[0] - r) ** 2 + (c[1] - g) ** 2 + (c[2] - b) ** 2; if (d < bd) { bd = d; best = i + 1; } });
+  nearestClassCache.set(key, best);
+  return best;
+}
+
+const liveBtn = document.getElementById('live-btn');
+const liveStatus = document.getElementById('live-status');
+function setLive(text) { liveStatus.textContent = text; }
+
+// What the screen needs now: the date, the area on screen (and a margin, so small moves need nothing new) and the size.
+function wantedDetail() {
+  const b = viewBox();
+  const spanLon = b.w / MAP_W * 360, spanLat = b.h / MAP_H * 180;
+  const cLon = (b.x + b.w / 2) / MAP_W * 360 - 180, cLat = 90 - (b.y + b.h / 2) / MAP_H * 180;
+  const vis = { lon0: cLon - spanLon / 2, lon1: cLon + spanLon / 2, lat0: cLat - spanLat / 2, lat1: cLat + spanLat / 2 };
+  const lon0 = Math.max(-180, cLon - spanLon * 0.75), lon1 = Math.min(180, cLon + spanLon * 0.75);
+  const lat0 = Math.max(-90, cLat - spanLat * 0.75), lat1 = Math.min(90, cLat + spanLat * 0.75);
+  const need = Math.min(canvas.width / spanLon, GIBS_PX_PER_DEG);  // pixels per degree the screen can show
+  const w = Math.max(256, Math.min(2048, Math.round((lon1 - lon0) * need)));
+  const h = Math.max(128, Math.round(w * (lat1 - lat0) / (lon1 - lon0)));
+  const date = FRAMES[frameShown][1] === null ? (liveDate || FRAMES[frameShown][0]) : FRAMES[frameShown][0];
+  return { date, frame: frameShown, lon0, lon1, lat0, lat1, w, h, vis, need };
+}
+function coversView(d, want) {
+  const v = want.vis, eps = 1e-6;
+  const inside = d.lon0 <= Math.max(-180, v.lon0) + eps && d.lon1 >= Math.min(180, v.lon1) - eps &&
+                 d.lat0 <= Math.max(-90, v.lat0) + eps && d.lat1 >= Math.min(90, v.lat1) - eps;
+  return inside && d.w / (d.lon1 - d.lon0) >= Math.min(want.need, GIBS_PX_PER_DEG) * 0.8;
+}
+
+function scheduleDetail(now) {  // called after every drawing; waits until the view has been still for a moment
+  clearTimeout(detailTimer);
+  if (!liveOn || document.getElementById('app').hidden) return;
+  detailTimer = setTimeout(loadDetail, now ? 0 : 400);
+}
+
+async function loadDetail() {
+  if (!liveOn) return;
+  if (FRAMES[frameShown][1] === null && liveDateState === 'pending') return;  // wait for the newest date (it re-schedules us)
+  const want = wantedDetail();
+  if (detail && detail.date === want.date && detail.frame === want.frame && coversView(detail, want)) { setLive(`NASA GIBS, ${niceDate(detail.date)}`); return; }
+  const key = [want.date, want.lon0.toFixed(2), want.lat0.toFixed(2), want.w].join('|');
+  if (key === detailFailedKey && Date.now() - detailFailedAt < 15000) return;  // do not hammer a service that just failed
+  if (detailAbort) detailAbort.abort();
+  const control = detailAbort = new AbortController();
+  setLive('loading…');
+  try {
+    const url = `${GIBS.wms}?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=${GIBS.layer}&STYLES=&SRS=EPSG:4326` +
+      `&BBOX=${want.lon0.toFixed(4)},${want.lat0.toFixed(4)},${want.lon1.toFixed(4)},${want.lat1.toFixed(4)}` +
+      `&WIDTH=${want.w}&HEIGHT=${want.h}&FORMAT=image/png&TRANSPARENT=TRUE&TIME=${want.date}`;
+    const response = await fetch(url, { signal: control.signal });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const blob = await response.blob();
+    if (!/image\/png/.test(blob.type)) throw new Error('no picture for this date');
+    const picture = await createImageBitmap(blob);
+    if (control.signal.aborted) return;
+    const result = decodeDetail(picture, want);
+    if (want.frame !== frameShown || !liveOn) return;  // the slider moved on while the picture was coming
+    detail = result;
+    detailFailedKey = '';
+    setLive(`NASA GIBS, ${niceDate(result.date)}`);
+    refreshAfterDetail();
+  } catch (e) {
+    if (e.name === 'AbortError') return;
+    detailFailedKey = key;
+    detailFailedAt = Date.now();
+    setLive(navigator.onLine === false ? 'offline: using the saved picture' : 'live detail not available: using the saved picture');
+  }
+}
+
+// Reads the pixels of the GIBS picture into classes, and paints them in this page's colours.
+function decodeDetail(picture, want) {
+  const w = picture.width, h = picture.height;
+  const work = document.createElement('canvas');
+  work.width = w; work.height = h;
+  const wc = work.getContext('2d', { willReadFrequently: true });
+  wc.drawImage(picture, 0, 0);
+  const img = wc.getImageData(0, 0, w, h);
+  const src = new Uint32Array(img.data.buffer);
+  const cls = new Uint8Array(w * h);
+  for (let i = 0; i < src.length; i++) {
+    const px = src[i];
+    if ((px >>> 24) < 128) { src[i] = 0; continue; }  // transparent: land, ice or no data. Keep it empty.
+    const c = CLASS_OF_COLOUR.get(px & 0xffffff) || nearestClass(px);
+    cls[i] = c;
+    src[i] = CLASS_PAINT[c - 1];
+  }
+  wc.putImageData(img, 0, 0);
+  return { date: want.date, frame: want.frame, lon0: want.lon0, lon1: want.lon1, lat0: want.lat0, lat1: want.lat1, w, h, cls, canvas: work };
+}
+
+function refreshAfterDetail() {
+  render();
+  timeDate.textContent = frameLabel(frameShown);
+  if (lastProbe) probe(cursor.x, cursor.y, false, !(tipOn || markerOn));  // read the same spot again, now in finer detail
+}
+
+// The value under a point from the live picture, or null (not covered, or no data there).
+function detailAt(lon, lat) {
+  const d = detail;
+  if (!d || !liveOn || lon < d.lon0 || lon >= d.lon1 || lat <= d.lat0 || lat > d.lat1) return null;
+  const col = Math.min(d.w - 1, Math.floor((lon - d.lon0) / (d.lon1 - d.lon0) * d.w));
+  const row = Math.min(d.h - 1, Math.floor((d.lat1 - lat) / (d.lat1 - d.lat0) * d.h));
+  const c = d.cls[row * d.w + col];
+  if (!c) return null;
+  const word = CLASS_PAINT[c - 1];
+  return { value: GIBS_CLASSES[c - 1][3], color: [word & 255, (word >> 8) & 255, (word >> 16) & 255] };
+}
+
+// Paints the live picture over the saved one (only where it has data), for the part that is on screen.
+function drawDetail(b) {
+  const d = detail;
+  if (!d || !liveOn) return;
+  const x0 = (d.lon0 + 180) / 360 * MAP_W, x1 = (d.lon1 + 180) / 360 * MAP_W;
+  const y0 = (90 - d.lat1) / 180 * MAP_H, y1 = (90 - d.lat0) / 180 * MAP_H;
+  const ix0 = Math.max(x0, b.x), ix1 = Math.min(x1, b.x + b.w), iy0 = Math.max(y0, b.y), iy1 = Math.min(y1, b.y + b.h);
+  if (ix1 <= ix0 || iy1 <= iy0) return;
+  const k = canvas.width / b.w;  // screen pixels per map pixel
+  const sx = (ix0 - x0) / (x1 - x0) * d.w, sw = (ix1 - ix0) / (x1 - x0) * d.w;
+  const sy = (iy0 - y0) / (y1 - y0) * d.h, sh = (iy1 - iy0) / (y1 - y0) * d.h;
+  view.imageSmoothingEnabled = (ix1 - ix0) * k / sw < 2;  // zoomed in far: crisp pixels; otherwise smooth
+  view.drawImage(d.canvas, sx, sy, sw, sh, (ix0 - b.x) * k, (iy0 - b.y) * k, (ix1 - ix0) * k, (iy1 - iy0) * k);
+}
+
+function toggleLive() {
+  liveOn = !liveOn;
+  liveBtn.setAttribute('aria-pressed', String(liveOn));
+  if (!liveOn) {
+    if (detailAbort) detailAbort.abort();
+    clearTimeout(detailTimer);
+    detail = null;
+    setLive('');
+    timeDate.textContent = frameLabel(frameShown);
+    render();
+    if (lastProbe) probe(cursor.x, cursor.y, false, !(tipOn || markerOn));
+  } else {
+    detailFailedKey = '';
+    scheduleDetail(true);
+  }
+  announce(liveOn ? 'Live detail on.' : 'Live detail off. The saved picture is used.');
+}
+liveBtn.addEventListener('click', toggleLive);
+
+// The newest day GIBS has (so the latest position of the slider can say which day the live picture shows).
+fetch(GIBS.caps).then((r) => r.ok ? r.text() : Promise.reject(new Error(`HTTP ${r.status}`))).then((xml) => {
+  const m = /<Default>(\d{4}-\d{2}-\d{2})<\/Default>/.exec(xml);
+  if (m) liveDate = m[1];
+  liveDateState = m ? 'ready' : 'failed';
+  scheduleDetail(true);
+}).catch(() => { liveDateState = 'failed'; scheduleDetail(true); });  // offline: the next attempt fails too and the saved picture is used
+
 // ---- Time slider: one picture per month, plus the latest ----
 // Source: NASA SVS #5176, one frame for the first available day of each month from June 2024, and the latest frame
 // (11 November 2026). NASA publishes these frames only as 4096 x 2048 EXR files, so each one was converted to a
@@ -1160,8 +1358,9 @@ let frameShown = FRAMES.length - 1;       // the picture now in the hidden canva
 let frameWanted = frameShown;             // the one the slider is on (it may still be loading)
 let framesUsable = location.protocol !== 'file:';  // a page opened as a file cannot read pixels of other files
 
-function frameLabel(i) {
-  const [y, m, d] = FRAMES[i][0].split('-');
+function frameLabel(i) {  // the date of what is really on screen: the live picture's day when it is in use
+  const iso = detail && liveOn && detail.frame === i ? detail.date : FRAMES[i][0];
+  const [y, m, d] = iso.split('-');
   return `${+d} ${MONTHS[+m - 1]} ${y}`;
 }
 function disableFrames(why) {
@@ -1188,9 +1387,11 @@ function readable(im) {
 }
 
 function showFrame(i, picture) {
-  ctx.drawImage(picture, 0, 0, MAP_W, MAP_H);  // the hidden canvas: the one place the values are read from
+  ctx.drawImage(picture, 0, 0, MAP_W, MAP_H);  // the hidden canvas: the saved picture, read where there is no live detail
   frameShown = i;
+  detail = null;  // a live picture of another day must not stay on this one
   render();
+  scheduleDetail(true);
   // read the same spot again, in the new picture. The sound follows only if the pointer or keyboard is on the map.
   if (lastProbe) probe(cursor.x, cursor.y, false, !(tipOn || markerOn));
   const text = lastProbe ? `${frameLabel(i)}. ${describe(lastProbe.result, lastProbe.place)}` : frameLabel(i);
@@ -1556,6 +1757,18 @@ function renderSources(doc) {
       (got.length ? `, downloaded ${got.map(niceDate).join(' and ')}` : '') + '. ' +
       (derived.length ? `${derived.length} of them are derived: ${derived[0].processing}` : '');
     blocks.push(credit, what);
+  }
+  for (const s of doc.live_sources || []) {  // services the page asks while it is used
+    const ack = document.createElement('p');
+    ack.textContent = s.acknowledgement;
+    const how = document.createElement('p');
+    const link = document.createElement('a');
+    link.href = s.page;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.textContent = 'GIBS';
+    how.append(`Live detail: ${s.name}, from ${s.service} (`, link, `). ${s.how_used} Dates available: ${s.dates_available}.`);
+    blocks.push(ack, how);
   }
   aboutSources.replaceChildren(...blocks);
 }
