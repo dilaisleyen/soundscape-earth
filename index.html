@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Soundscape Earth</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
 <style>
   :root { --bg:#070b11; --panel:#0e141c; --line:#243040; --ink:#e8edf3; --muted:#9fb0c2; --gold:#ffd54a;
@@ -39,7 +40,7 @@
 
   /* The map: a framed 2:1 stage. Two canvases and the zoom buttons sit on top of each other inside it. */
   #frame { border:1px solid var(--line); border-radius:16px; overflow:hidden; background:#000; box-shadow:0 20px 60px rgba(0,0,0,.5); }
-  /* The time slider under the map: one picture per month, plus the latest */
+  /* The bar under the map: the two data views, live detail, data opacity and the year slider */
   #timebar { display:flex; flex-direction:column; gap:4px; margin-top:8px; }
   .tb-row { display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; min-height:36px; }
   #timebar label { font-weight:600; font-size:15px; }
@@ -359,7 +360,7 @@
   <p>NASA imagery and data used here are provided by NASA and used under <a href="https://www.nasa.gov/nasa-brand-center/images-and-media/" target="_blank" rel="noopener">NASA's Media Usage Guidelines</a>. The pictures in data/nasa/ are copies kept in this project. When you are online, the page also asks NASA's GIBS service for the base map under the temperature picture (Blue Marble, so land shows detail when you zoom in) and for finer, up-to-date pictures of the area on screen (the Live detail button switches the second off); nothing else is requested from NASA's servers. Without the network the page shows the saved picture alone. NASA does not endorse this project.</p>
   <p>The base map is shown with <a href="https://leafletjs.com/" target="_blank" rel="noopener">Leaflet</a> (BSD 2-Clause licence, &copy; Volodymyr Agafonkin), kept in this project in vendor/leaflet/. Leaflet only draws; the values, sounds and spoken texts are read from the saved picture and the live detail, never from the base map.</p>
   <p>The pictures do not update by themselves. In the Latest view, 0&nbsp;&deg;C means &ldquo;same as normal&rdquo;; the source page does not state which reference period &ldquo;normal&rdquo; is based on. In the Through the years view the pictures are GIBS&rsquo;s MUR25 sea surface temperature anomaly (0.25&deg;), 13 November of each year from 2002 to 2025 and &ldquo;Today&rdquo; (the day written in the list of sources, not looked up by the page); there &ldquo;normal&rdquo; is the average for the same calendar day over 2003&ndash;2014 (PO.DAAC, MUR25 v4.2) and the colour scale ends at &plusmn;3&nbsp;&deg;C. Values are read from the colours of the picture, so they are approximate, and the colour scale ends at &plusmn;4&nbsp;&deg;C. The live detail comes in classes of 0.1&nbsp;&deg;C that end at &plusmn;3&nbsp;&deg;C, and it is a different product from the saved picture (GIBS&rsquo;s MUR anomaly instead of the SVS one), so the two typically differ by about 0.3&nbsp;&deg;C.</p>
-  <p>Human presence and Wildlife diversity (two sound layers that sound over land only): <em>Human presence</em> is NASA SEDAC&rsquo;s Gridded Population of the World, Version 4 (GPWv4), Population Density, as served by NASA GIBS: people per square kilometre in 2000, 2005, 2010, 2015 and 2020. The picture nearest to the year on screen is used (the Latest view uses 2020), and GIBS&rsquo;s colour scale ends at 1000 people per km&sup2;, so every denser place counts as 1000. <em>Wildlife diversity</em> is NASA SEDAC&rsquo;s Global Mammal Richness Grids (2015 release), built from IUCN Red List species ranges downloaded in April 2013: it is the number of <strong>mammal species</strong> in a place. It counts mammals only (no birds), comes from a 2013 picture and is the same in every year; it is not a count of animals. Both pictures are reduced by GIBS to 2048 x 1024 (each pixel is one 1-km cell, not an average), so small places can be missed. Both come from the saved copies in data/nasa/, read with GIBS&rsquo;s own colour tables. The full citations are in the list above.</p>
+  <p>Human presence and Wildlife diversity (two sound layers that sound over land only): <em>Human presence</em> is NASA SEDAC&rsquo;s Gridded Population of the World, Version 4 (GPWv4), Population Density, as served by NASA GIBS: people per square kilometre in 2000, 2005, 2010, 2015 and 2020. The picture nearest to the year on screen is used (the Latest view uses 2020). Population values are capped at 1000 people per km&sup2;: every denser place counts as 1000. <em>Wildlife diversity</em> is NASA SEDAC&rsquo;s Global Mammal Richness Grids (2015 release), built from IUCN Red List species ranges downloaded in April 2013: it is the number of <strong>mammal species</strong> in a place. It counts mammals only (no birds), comes from a 2013 picture and is the same in every year; it is not a count of animals. Both pictures are reduced by GIBS to 2048 x 1024 (each pixel is one 1-km cell, not an average), so small places can be missed. Both come from the saved copies in data/nasa/, read with GIBS&rsquo;s own colour tables. The full citations are in the list above. Mammal species richness data (IUCN Red List via NASA SEDAC/CIESIN) are used for non-commercial, educational purposes. Full citation: Center For International Earth Science Information Network-CIESIN-Columbia University & NatureServe. (2015). Gridded Species Distribution: Global Mammal Richness Grids, 2015 Release (Version 2015.00) [Data set]. Palisades, NY: NASA Socioeconomic Data and Applications Center (SEDAC). https://doi.org/10.7927/H4N014G5</p>
   <p>Country names: Natural Earth (public domain), <em>Admin 0 &ndash; Countries</em>, 1:50m, naturalearthdata.com. They are a label layer only: the sound and the values never use them. The place named for the pointer is approximate: a country is named only when it is clearly the closest one, otherwise the continent is named.</p>
   <p>Soundscape Earth is a prototype made for the NASA International Space Apps Challenge 2026. It is not an official NASA website, and NASA does not endorse this project.</p>
   <button id="about-close" class="tool" type="button" autofocus>Close</button>
@@ -1324,7 +1325,7 @@ function whereAmI() {
 }
 
 // ---- Live detail: finer, up-to-date pictures from NASA GIBS for the area on screen ----
-// The picture that opens with the page (and the monthly pictures of the slider) are copies kept in this project:
+// The picture that opens with the page is a copy kept in this project:
 // 1024 x 512 pixels, about 39 km per pixel. NASA's GIBS service (Global Imagery Browse Services) serves the same kind
 // of data, the MUR sea surface temperature anomaly, down to about 1 km and up to the latest day. When you are online,
 // the page asks GIBS for just the area on screen (a few hundred KB) a moment after you stop zooming or moving, draws it

@@ -18,8 +18,7 @@ Special entries:
   - "date_known": true (pictures asked for a fixed day): "data_date" stays even if the picture changes.
   - "kind": "colormap" (an XML file instead of a picture).
 
-Entries with "fetch": false (derived files, such as the time slider frames, which are converted from NASA's EXR
-files) are listed but never touched.
+Entries with "fetch": false (derived files, converted from NASA's own files) are listed but never touched.
 
 Only the Python standard library is used.
 
