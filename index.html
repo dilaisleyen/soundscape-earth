@@ -80,7 +80,13 @@
   #sst-op { width:110px; height:32px; accent-color:var(--gold); cursor:pointer; }
   #sst-op:disabled { opacity:.5; cursor:not-allowed; }
   #sst-op-val { min-width:3.2em; font-variant-numeric:tabular-nums; color:var(--muted); font-size:14px; }
-  .tool[data-view="data"] { border-color:var(--gold); color:var(--gold); }
+  .seg { display:inline-flex; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--panel); }
+  .seg-btn { font:inherit; font-size:16px; color:var(--ink); background:transparent; border:0; padding:10px 16px; min-height:44px; cursor:pointer; }
+  .seg-btn + .seg-btn { border-left:1px solid var(--line); }
+  .seg-btn:hover:not(:disabled):not([aria-pressed="true"]) { background:rgba(255,213,74,.12); }
+  .seg-btn[aria-pressed="true"] { background:var(--gold); color:#111; font-weight:700; }  /* the chosen view is solid gold */
+  .seg-btn:disabled { opacity:.5; cursor:not-allowed; }
+  .seg-btn:focus-visible { outline-offset:-3px; }
   .tool:disabled { opacity:.5; cursor:not-allowed; }
   #lg-note { margin:8px 0 0; font-size:13px; color:var(--muted); }
   #lg-note[hidden] { display:none; }
@@ -179,6 +185,7 @@
     header { grid-column:1 / -1; margin:0; }
     h1 { font-size:24px; }
     .tool { min-height:38px; padding:6px 14px; font-size:15px; }
+    .seg-btn { min-height:36px; padding:6px 14px; font-size:15px; }
     #mapcol { grid-column:1; grid-row:2; min-width:0; min-height:0; display:grid; grid-template-rows:minmax(0, 1fr) auto; row-gap:8px; }
     #mapfit { min-width:0; min-height:0; container-type:size; display:grid; place-items:center; }
     #frame { width:min(100cqw, 200cqh); }
@@ -254,7 +261,10 @@
     <button id="start" class="tool primary" type="button">Start sound</button>
     <button id="grid-btn" class="tool" type="button" aria-pressed="true" aria-keyshortcuts="G">Grid</button>
     <button id="labels-btn" class="tool" type="button" aria-pressed="true" aria-keyshortcuts="L" title="Country names on the map">Labels</button>
-    <button id="view-btn" class="tool" type="button" data-view="earth" aria-keyshortcuts="V" aria-label="Map view: Earth view. Press to switch to Data view." title="Switch between Earth view and Data view (V)">Earth view</button>
+    <div id="view-seg" class="seg" role="group" aria-label="Map view" aria-keyshortcuts="V" title="Map view (shortcut V)">
+      <button id="view-data" class="seg-btn" type="button" aria-pressed="true" aria-label="Data view">Data</button>
+      <button id="view-earth" class="seg-btn" type="button" aria-pressed="false" aria-label="Earth view">Earth</button>
+    </div>
     <button id="ui-btn" class="tool" type="button" aria-pressed="true" aria-keyshortcuts="U" title="Soft sounds for buttons, zoom and screen changes">UI sounds</button>
     <button id="access" class="tool" type="button" aria-keyshortcuts="Control+Alt+B">Accessibility options</button>
   </div>
@@ -430,7 +440,7 @@ const lockMark = document.getElementById('lockmark');
 let tilesState = 'off';
 let dataView = 'latest';   // 'latest' (the NASA EIC picture) or 'years' (25 steps, see "Data views")
 let yearShown = -1, yearData = null;  // the step on screen and its classes
-let viewMode = 'earth';   // 'earth': only the base map is shown; 'data': the temperature layers are shown over it (see applyView)
+let viewMode = 'data';    // 'data' (the default): the temperature layers are shown over the base map; 'earth': only the base map is shown (see applyView). Not saved: every visit opens in the Data view.
 let sstOpacity = 0.75;    // how solid the temperature layers are in the Data view
 let lmap = null, baseLayer = null, sstOverlay = null, liveOverlay = null;
 let sstFrame = -1, lastLive = null;  // which saved picture / live picture the overlays hold
@@ -1315,7 +1325,7 @@ const GUIDE = "Soundscape Earth turns NASA's sea surface temperature map into so
   'Press W to hear where you are, R to repeat, H for help, and Space to stop or start the sound.';
 const HELP = 'Arrow keys move over the map. Hold Shift to move faster. W says where you are. ' +
   'Plus and minus zoom in and out, and zero shows the whole map. G turns the grid on or off. ' +
-  'Click the map with the mouse to lock the sound on that spot, and right-click to release it. L turns the country names on or off. V switches between Earth view and Data view. C reads the line chart of the spot through the years. T, P and M switch the sound layers ocean temperature, human presence and wildlife diversity on and off; the last two sound over land only. U turns the interface sounds on or off. E says why the current place sounds the way it does, and D gives the details. ' +
+  'Click the map with the mouse to lock the sound on that spot, and right-click to release it. L turns the country names on or off. V switches between Data view (the default) and Earth view. C reads the line chart of the spot through the years. T, P and M switch the sound layers ocean temperature, human presence and wildlife diversity on and off; the last two sound over land only. U turns the interface sounds on or off. E says why the current place sounds the way it does, and D gives the details. ' +
   'R repeats the last message. Space starts or stops the sound. ' +
   'Under the map you can choose the latest picture or the years; in the years, Tab to the year slider, then use the left and right arrow keys, Home for 2002 and End for today. ' +
   'Control, Alt and B reopen the accessibility options.';
@@ -2877,7 +2887,8 @@ function makeLiveOverlay(d) {
 // The way the layers blend with the base map (a CSS blend mode) can be tried with ?blend=soft-light etc. in the address.
 const BLENDS = ['normal', 'multiply', 'screen', 'overlay', 'soft-light', 'hard-light', 'color', 'hue', 'saturation', 'luminosity'];
 const BLEND = (() => { const b = new URLSearchParams(location.search).get('blend'); return BLENDS.includes(b) ? b : 'normal'; })();
-const viewBtn = document.getElementById('view-btn');
+const viewDataBtn = document.getElementById('view-data');
+const viewEarthBtn = document.getElementById('view-earth');
 const opInput = document.getElementById('sst-op');
 const opVal = document.getElementById('sst-op-val');
 const lgNote = document.getElementById('lg-note');
@@ -2885,11 +2896,10 @@ const lgNote = document.getElementById('lg-note');
 function applyView() {
   const noTiles = tilesState === 'off';
   const earth = viewMode === 'earth' && !noTiles;  // without the base map the data is all there is to show
-  viewBtn.textContent = earth ? 'Earth view' : 'Data view';
-  viewBtn.dataset.view = earth ? 'earth' : 'data';
-  viewBtn.disabled = noTiles;
-  viewBtn.setAttribute('aria-label', noTiles ? 'Map view: Data view. Earth view needs the NASA base map, which is not available now.'
-    : `Map view: ${earth ? 'Earth' : 'Data'} view. Press to switch to ${earth ? 'Data' : 'Earth'} view.`);
+  viewDataBtn.setAttribute('aria-pressed', String(!earth));  // the screen reader says which of the two is chosen
+  viewEarthBtn.setAttribute('aria-pressed', String(earth));
+  viewEarthBtn.disabled = noTiles;
+  viewEarthBtn.title = noTiles ? 'Earth view needs the NASA base map, which is not available now' : '';
   opInput.disabled = earth || noTiles;
   for (const b of Object.values(mapBoxes)) { b.disabled = noTiles; b.title = noTiles ? 'Needs the NASA base map, which is not available now' : ''; }  // the land pictures are shown by the base map view
   lgNote.hidden = !earth;
@@ -2901,16 +2911,19 @@ function applyView() {
   if (tilesState === 'trying' && earth) { mapNote.textContent = 'Loading the base map…'; mapNote.hidden = false; }
   else if (tilesState !== 'off') mapNote.hidden = true;
 }
-function toggleView() {
-  if (tilesState === 'off') { announce('Earth view needs the NASA base map, which is not available now. Only the Data view can be shown.'); return; }
-  viewMode = viewMode === 'earth' ? 'data' : 'earth';
+function setViewMode(next) {  // the two buttons and the V key
+  if (tilesState === 'off' && next === 'earth') { announce('Earth view needs the NASA base map, which is not available now. Only the Data view can be shown.'); return; }
+  if (next === viewMode) return;
+  viewMode = next;
   applyView();
   render();
   announce(viewMode === 'earth'
     ? 'Earth view. Only the NASA base map is shown. Values, sounds and texts still come from the temperature data.'
     : `Data view. The temperature colours are shown over the base map at ${Math.round(sstOpacity * 100)} percent.`);
 }
-viewBtn.addEventListener('click', toggleView);
+function toggleView() { setViewMode(viewMode === 'earth' ? 'data' : 'earth'); }
+viewDataBtn.addEventListener('click', () => setViewMode('data'));
+viewEarthBtn.addEventListener('click', () => setViewMode('earth'));
 opInput.addEventListener('input', () => {
   sstOpacity = opInput.value / 100;
   opVal.textContent = `${opInput.value}%`;
