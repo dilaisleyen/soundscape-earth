@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Earth Jukebox</title>
+<title>Soundscape Earth</title>
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
 <style>
   :root { --bg:#070b11; --panel:#0e141c; --line:#243040; --ink:#e8edf3; --muted:#9fb0c2; --gold:#ffd54a;
@@ -243,7 +243,7 @@
 <main id="app" class="view" aria-labelledby="app-title" hidden>
 <header>
   <div class="brand">
-    <h1 id="app-title" tabindex="-1">Earth Jukebox</h1>
+    <h1 id="app-title" tabindex="-1">Soundscape Earth</h1>
     <p class="sub">Explore NASA's sea surface temperature map by sound</p>
   </div>
   <div class="tools">
@@ -361,7 +361,7 @@
   <p>The pictures do not update by themselves. In the Latest view, 0&nbsp;&deg;C means &ldquo;same as normal&rdquo;; the source page does not state which reference period &ldquo;normal&rdquo; is based on. In the Through the years view the pictures are GIBS&rsquo;s MUR25 sea surface temperature anomaly (0.25&deg;), 13 November of each year from 2002 to 2025 and &ldquo;Today&rdquo; (the day written in the list of sources, not looked up by the page); there &ldquo;normal&rdquo; is the average for the same calendar day over 2003&ndash;2014 (PO.DAAC, MUR25 v4.2) and the colour scale ends at &plusmn;3&nbsp;&deg;C. Values are read from the colours of the picture, so they are approximate, and the colour scale ends at &plusmn;4&nbsp;&deg;C. The live detail comes in classes of 0.1&nbsp;&deg;C that end at &plusmn;3&nbsp;&deg;C, and it is a different product from the saved picture (GIBS&rsquo;s MUR anomaly instead of the SVS one), so the two typically differ by about 0.3&nbsp;&deg;C.</p>
   <p>Human presence and Wildlife diversity (two sound layers that sound over land only): <em>Human presence</em> is NASA SEDAC&rsquo;s Gridded Population of the World, Version 4 (GPWv4), Population Density, as served by NASA GIBS: people per square kilometre in 2000, 2005, 2010, 2015 and 2020. The picture nearest to the year on screen is used (the Latest view uses 2020), and GIBS&rsquo;s colour scale ends at 1000 people per km&sup2;, so every denser place counts as 1000. <em>Wildlife diversity</em> is NASA SEDAC&rsquo;s Global Mammal Richness Grids (2015 release), built from IUCN Red List species ranges downloaded in April 2013: it is the number of <strong>mammal species</strong> in a place. It counts mammals only (no birds), comes from a 2013 picture and is the same in every year; it is not a count of animals. Both pictures are reduced by GIBS to 2048 x 1024 (each pixel is one 1-km cell, not an average), so small places can be missed. Both come from the saved copies in data/nasa/, read with GIBS&rsquo;s own colour tables. The full citations are in the list above.</p>
   <p>Country names: Natural Earth (public domain), <em>Admin 0 &ndash; Countries</em>, 1:50m, naturalearthdata.com. They are a label layer only: the sound and the values never use them. The place named for the pointer is approximate: a country is named only when it is clearly the closest one, otherwise the continent is named.</p>
-  <p>Earth Jukebox is a prototype made for the NASA International Space Apps Challenge 2026. It is not an official NASA website, and NASA does not endorse this project.</p>
+  <p>Soundscape Earth is a prototype made for the NASA International Space Apps Challenge 2026. It is not an official NASA website, and NASA does not endorse this project.</p>
   <button id="about-close" class="tool" type="button" autofocus>Close</button>
 </dialog>
 </main>
@@ -370,7 +370,7 @@
 
 <main id="landing" class="view" aria-labelledby="landing-title">
   <div id="w-card">
-    <h1 id="landing-title" tabindex="-1">Earth Jukebox</h1>
+    <h1 id="landing-title" tabindex="-1">Soundscape Earth</h1>
     <h2 id="w-title"></h2>
     <p id="w-text"></p>
     <div id="w-actions">
@@ -760,7 +760,7 @@ function scheduleSprout() {
 // The same language as the calm theme: soft sine notes from the same A / E family as the chords, with a soft
 // start and a quick fade. They are much quieter than the data sounds (which always stay in front), and they are
 // only heard while the sound is running. The "UI sounds" button (or U) switches them off on their own.
-const UI_KEY = 'earth-jukebox-ui-sounds';
+const UI_KEY = 'soundscape-earth-ui-sounds';
 const UI_LEVEL = 0.03;  // peak volume of one note; the data sounds peak several times higher
 let uiSoundsOn = true;
 try { if (localStorage.getItem(UI_KEY) === 'off') uiSoundsOn = false; } catch (e) { /* no saved choice */ }
@@ -1273,7 +1273,7 @@ resize();
 // mode 'off'   : nothing extra (a screen reader may still read the live region)
 // mode 'voice' : the page speaks by itself with the browser's voice (user has no screen reader)
 // mode 'sr'    : the page writes everything into the live region for the user's own screen reader
-const MODE_KEY = 'earth-jukebox-mode';
+const MODE_KEY = 'soundscape-earth-mode';
 let mode = 'off';
 let lastAnnouncement = '';
 
@@ -1302,7 +1302,7 @@ function announce(text) {
   toLive(text);
 }
 
-const GUIDE = "Earth Jukebox turns NASA's sea surface temperature map into sound. " +
+const GUIDE = "Soundscape Earth turns NASA's sea surface temperature map into sound. " +
   'Move over the map with the arrow keys, and hold Shift to move faster. Press plus to zoom in for finer steps. ' +
   'At each position you hear the place and how much warmer or colder than normal the water is. ' +
   'Normal water sounds calm and neutral. Warmer water sounds brighter and livelier. ' +
@@ -2115,7 +2115,7 @@ let step = 'ask';
 
 const STEPS = {
   ask: {
-    title: 'Welcome to Earth Jukebox',
+    title: 'Welcome to Soundscape Earth',
     text: "Explore NASA's ocean temperature map through sound. Do you want blind assistance?",
     yes: 'Yes, turn on blind assistance', no: 'No, continue',
     onYes: () => show('how'), onNo: () => finish('off', false),
@@ -2128,7 +2128,7 @@ const STEPS = {
   },
   guide: {
     title: 'Quick guide',
-    text: 'Would you like a short guide to how Earth Jukebox works?',
+    text: 'Would you like a short guide to how Soundscape Earth works?',
     yes: 'Yes, tell me', no: 'No, start exploring',
     onYes: () => finish(mode, true), onNo: () => finish(mode, false),
   },

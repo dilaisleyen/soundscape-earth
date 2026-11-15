@@ -42,7 +42,7 @@ import urllib.request
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NASA_DIR = os.path.join(ROOT, 'data', 'nasa')
 SOURCES = os.path.join(NASA_DIR, 'SOURCES.json')
-USER_AGENT = 'earth-jukebox-fetch/1.0 (downloads the NASA pictures listed in SOURCES.json)'
+USER_AGENT = 'soundscape-earth-fetch/1.0 (downloads the NASA pictures listed in SOURCES.json)'
 
 
 def destination(entry):

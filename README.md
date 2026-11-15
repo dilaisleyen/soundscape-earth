@@ -1,10 +1,10 @@
-# Earth Jukebox
+# Soundscape Earth
 
 Explore NASA's sea surface temperature map by sound. Move over the map with a mouse, a finger or the keyboard, and the value under the pointer is turned into sound in real time, so Earth science can be heard as well as seen.
 
 Made for the NASA International Space Apps Challenge 2026, challenge **The Earth Information Jukebox**.
 
-> Earth Jukebox is a prototype. It is not an official NASA website, and NASA does not endorse this project.
+> Soundscape Earth is a prototype. It is not an official NASA website, and NASA does not endorse this project.
 
 ## What it does
 
@@ -141,6 +141,6 @@ The code in this project was written with the help of an AI assistant (Claude, b
 
 ## License
 
-The code in this project is by the Earth Jukebox team and is released under the [MIT License](LICENSE).
+The code in this project is by the Soundscape Earth team and is released under the [MIT License](LICENSE).
 
 NASA imagery and data in `data/nasa/` are not covered by this license. They are provided by NASA and used under [NASA's Media Usage Guidelines](https://www.nasa.gov/nasa-brand-center/images-and-media/). NASA does not endorse this project.
