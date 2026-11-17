@@ -99,9 +99,19 @@ Buttons, zoom and the change between the two screens answer with very soft notes
 
 ## Run it
 
-Open `index.html` in a modern browser (Chrome, Edge, Firefox or Safari). Sound starts after your first click or key press, because browsers do not allow sound before that.
+**Online (easiest):** open https://dilaisleyen.github.io/soundscape-earth/ in a modern browser (Chrome, Edge, Firefox or Safari). Sound starts after your first click or key press, because browsers do not allow sound before that.
 
-For a local web server: `python -m http.server`, then open `http://localhost:8000`.
+**On your computer (recommended for local use):** the page needs a small local web server, because it loads its pictures from the data/ folder.
+
+1. Install Python 3 if you do not have it.
+2. Open a terminal in the project folder (the one with index.html).
+3. Run `python -m http.server 8000`
+4. Open http://localhost:8000 in your browser.
+5. Stop the server with Ctrl+C in the terminal when you are done. The page only works while the server is running.
+
+**Opening index.html as a file** (double-click, address starting with file://) works only partly: the Through the years view and the Human presence and Wildlife diversity layers are switched off, because the browser does not let a page read the pictures of other files. Use the web address or the local server instead.
+
+An internet connection is needed for the NASA GIBS base map and the live detail; without it the page falls back to the saved picture.
 
 ## References
 
