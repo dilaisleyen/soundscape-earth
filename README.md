@@ -134,6 +134,13 @@ All NASA pictures live in `data/nasa/`, and `data/nasa/SOURCES.json` lists every
 - **NASA SEDAC / CIESIN, Columbia University and NatureServe**, *Gridded Species Distribution: Global Mammal Richness Grids, 2015 Release*, https://doi.org/10.7927/H4N014G5, through NASA GIBS (input: IUCN Red List species ranges, April 2013). In this project: 1 picture and the colour table in `data/nasa/mammals/`.
   - Please cite: Center For International Earth Science Information Network-CIESIN-Columbia University & NatureServe. (2015). Gridded Species Distribution: Global Mammal Richness Grids, 2015 Release (Version 2015.00) [Data set]. Palisades, NY: NASA Socioeconomic Data and Applications Center (SEDAC). https://doi.org/10.7927/H4N014G5
 - **Natural Earth** (public domain), *Admin 0 - Countries*, 1:50m, https://www.naturalearthdata.com/ (used for the country names only; a reduced copy is inside `index.html`).
+## Team
+
+Soundscape Earth was made by the team below for the NASA International Space Apps Challenge 2026. It was the team's first hackathon.
+
+- Dila İşleyen ([@dilaisleyen](https://github.com/dilaisleyen))
+- [@mselimm0](https://github.com/mselimm0)
+
 ## AI use
 
 The code in this project was written with the help of an AI assistant (Claude, by Anthropic), working from the team's instructions. The project idea, the sound design (what each kind of place should sound like and feel like) and the decisions about the interface were made by the team.
