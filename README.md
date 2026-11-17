@@ -151,3 +151,4 @@ The code in this project was written with the help of an AI assistant (Claude, b
 The code in this project is by the Soundscape Earth team and is released under the [MIT License](LICENSE).
 
 NASA imagery and data in `data/nasa/` are not covered by this license. They are provided by NASA and used under [NASA's Media Usage Guidelines](https://www.nasa.gov/nasa-brand-center/images-and-media/). NASA does not endorse this project.
+
