@@ -139,7 +139,8 @@ All NASA pictures live in `data/nasa/`, and `data/nasa/SOURCES.json` lists every
 Soundscape Earth was made by the team below for the NASA International Space Apps Challenge 2026. It was the team's first hackathon.
 
 - Dila İşleyen ([@dilaisleyen](https://github.com/dilaisleyen))
-- [@mselimm0](https://github.com/mselimm0)
+- Selim ([@mselimm0](https://github.com/mselimm0))
+- Yare
 
 ## AI use
 
